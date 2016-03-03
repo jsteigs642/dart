@@ -1,0 +1,70 @@
+<div layout="column" flex layout-fill layout-padding>
+    <md-whiteframe flex class="md-whiteframe-z1">
+        <md-content>
+            <md-autocomplete
+                    class="dt-mb40"
+                    md-no-cache="true"
+                    md-selected-item="selectedItem"
+                    md-search-text-change="onSearchTextChange(searchText)"
+                    md-search-text="searchText"
+                    md-selected-item-change="onSelectedItemChange()"
+                    md-items="entity in querySearch(searchText)"
+                    md-item-text="entity.data.name"
+                    md-min-length="0"
+                    placeholder="find workflow">
+                <md-item-template>
+                    <span md-highlight-text="searchText" md-highlight-flags="i">{{entity.data.name}}</span>
+                    <i class="dt-cgr">
+                        &mdash;
+                        <span><b>id</b>: {{entity.id}},</span>
+                        <span><b>datastore_id</b>: {{entity.data.datastore_id}}</span>
+                    </i>
+                </md-item-template>
+            </md-autocomplete>
+
+            <md-content layout-padding ng-if="!selectedItem">
+                <md-tabs md-selected="$parent.selectedTabIndex" md-dynamic-height md-border-bottom>
+                    <md-tab label="workflow" ng-disabled="true"> </md-tab>
+                    <md-tab label="steps" ng-disabled="true"> </md-tab>
+                    <md-tab label="triggers" ng-disabled="true"> </md-tab>
+                    <md-tab label="workflow instances" ng-disabled="true"> </md-tab>
+                    <md-tab label="actions" ng-disabled="true"> </md-tab>
+                </md-tabs>
+                <md-content layout-padding class="dt-pt20">
+                    <md-progress-circular ng-if="loading" md-mode="indeterminate"></md-progress-circular>
+                    <i ng-if="!loading">use the search bar to find a workflow</i>
+                </md-content>
+            </md-content>
+
+            <md-tabs md-selected="$parent.selectedTabIndex" md-dynamic-height md-border-bottom ng-if="selectedItem" ng-init="initScope(selectedItem)">
+                <md-tab label="workflow">
+                    <md-content layout-padding>
+                        <dt-workflows-table options="workflowTableOptions"></dt-workflows-table>
+                    </md-content>
+                </md-tab>
+                <md-tab label="steps">
+                    <md-content layout-padding>
+                        <dt-actions-table options="stepTableOptions"> </dt-actions-table>
+                        <dt-actions-create-new options="stepCreateNewOptions"></dt-actions-create-new>
+                    </md-content>
+                </md-tab>
+                <md-tab label="triggers">
+                    <md-content layout-padding>
+                        <dt-triggers-table options="triggerTableOptions"> </dt-triggers-table>
+                        <dt-triggers-create-new options="triggerCreateNewOptions"></dt-triggers-create-new>
+                    </md-content>
+                </md-tab>
+                <md-tab label="workflow instances">
+                    <md-content layout-padding>
+                        <dt-workflow-instances-table options="workflowInstanceTableOptions"></dt-workflow-instances-table>
+                    </md-content>
+                </md-tab>
+                <md-tab label="actions">
+                    <md-content layout-padding>
+                        <dt-actions-table options="actionTableOptions"> </dt-actions-table>
+                    </md-content>
+                </md-tab>
+            </md-tabs>
+        </md-content>
+    </md-whiteframe>
+</div>

@@ -1,0 +1,15 @@
+<md-toolbar class="dt-header">
+    <md-whiteframe class="md-whiteframe-2dp dt-h64" layout="row">
+        <md-button class="md-icon-button dt-toolbar-button"
+                   layout
+                   hide-gt-sm
+                   ng-click="sidenavOpen()"
+                   aria-label="menu">
+            <md-icon style="color:black">menu</md-icon>
+        </md-button>
+        <ui-breadcrumbs layout flex
+                        displayname-property="data.displayName"
+                        template-url="static/partials/directives/uiBreadcrumbs/uiBreadcrumbs.tpl.html">
+        </ui-breadcrumbs>
+    </md-whiteframe>
+</md-toolbar>

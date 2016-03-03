@@ -1,0 +1,29 @@
+[
+    {
+        "Classification": "hdfs-site",
+        "Configurations": [],
+        "Properties": {
+            "dfs.replication": "1",
+            "dfs.client.file-block-storage-locations.timeout.millis": "10000",
+            "dfs.client.read.shortcircuit": "true",
+            "dfs.datanode.hdfs-blocks-metadata.enabled": "true",
+            "dfs.domain.socket.path": "/var/run/hadoop-hdfs/domain_socket._PORT"
+        }
+    },
+    {
+        "Classification": "core-site",
+        "Configurations": [],
+        "Properties": {
+            "dfs.client.read.shortcircuit": "true",
+            "fs.permissions.umask-mode": "000"
+        }
+    },
+    {
+        "Classification": "spark-defaults",
+        "Properties": {
+            "spark.dynamicAllocation.enabled": "true",
+            "spark.executor.memory": "2G",
+            "spark.executor.cores": "2"
+        }
+    }
+]

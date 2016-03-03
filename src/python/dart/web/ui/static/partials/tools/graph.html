@@ -1,0 +1,23 @@
+<div layout="column" flex layout-fill layout-padding>
+
+    <md-whiteframe flex class="md-whiteframe-z1">
+        <dt-graph-menu-bar options="graphMenuBarOptions"></dt-graph-menu-bar>
+
+        <md-content md-border-bottom ng-if="selectedItem">
+            <dt-graph options="graphOptions" ng-if="graphOptions"></dt-graph>
+
+            <md-content ng-cloak>
+                <div ng-if="!current_node.entity_id">
+                    <i>select a node for more info</i>
+                </div>
+                <div ng-if="current_node.entity_id">
+                    <b>selected</b>: {{current_node.state ? '[' + current_node.state + ']' : ''}}
+                    <i ng-if="current_node.sub_type">{{current_node.sub_type}}</i>
+                    {{current_node.entity_type}}-{{current_node.entity_id}},
+                    {{current_node.name}}
+                </div>
+            </md-content>
+        </md-content>
+        <md-content ng-if="errorMessage"> <pre style="color:red">{{errorMessage}}</pre> </md-content>
+    </md-whiteframe>
+</div>

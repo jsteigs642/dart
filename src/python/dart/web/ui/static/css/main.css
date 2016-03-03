@@ -1,0 +1,89 @@
+.dt-navbar.md-sidenav-left {
+    cursor: default;
+    background: rgb(63,81,181);
+}
+
+.dt-navbar.md-sidenav-left md-content {
+    background: rgb(63,81,181);
+}
+
+.dt-navbar.md-sidenav-left md-list-item.md-button {
+    margin: 0;
+}
+
+.dt-navbar.md-sidenav-left md-content a {
+    color: white;
+    text-transform: none;
+    text-decoration: none;
+    text-align: left;
+}
+
+.dt-navbar.md-sidenav-left md-content a md-list-item {
+    overflow: visible;
+}
+
+.dt-navbar.md-sidenav-left md-content a.active md-list-item {
+    background-color: rgba(158,158,158,0.2);
+}
+
+.dt-navbar.md-sidenav-left .logo {
+    color: white;
+    font-size: 40px;
+    height: 270px;
+    text-align: center;
+}
+
+.dt-navbar.md-sidenav-left .logo md-icon {
+    color: white;
+    font-size: 200px;
+    display: inline;
+}
+
+.dt-modal {
+    min-width: 300px;
+    width: 80%;
+    padding: 20px;
+}
+
+.dt-menu-heading {
+    display: block;
+    line-height: 32px;
+    margin: 0;
+    padding: 8px 16px 0;
+    text-align: left;
+    width: 100%;
+    color: rgba(255, 255, 255, 0.54);
+    border-top: 1px solid rgba(255, 255, 255, 0.54);
+}
+
+md-toolbar.dt-header {
+    background: #f6f6f6;
+}
+
+md-toolbar.dt-header ui-breadcrumbs {
+    margin-top: 10px;
+}
+
+md-toolbar.dt-header .breadcrumb > .active {
+    color: black;
+}
+
+.dt-toolbar-button.md-button.md-icon-button {
+    margin-top: 12px;
+}
+
+.dt-content {
+    padding: 20px;
+}
+
+.schema-form-textarea textarea {
+    height: 250px
+}
+
+.dt-cgr {color: grey}
+.dt-h64 {height: 64px}
+.dt-mb40 {margin-bottom: 40px}
+.dt-mb10 {margin-bottom: 10px}
+.dt-ml-7 {margin-left: -7px}
+.dt-p0 {padding: 0}
+.dt-pt20 {padding-top: 20px}

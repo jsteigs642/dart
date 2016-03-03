@@ -1,0 +1,130 @@
+<md-menu-bar class="dt-p0">
+    <md-menu>
+        <button ng-click="$mdOpenMenu()">
+            file
+        </button>
+        <md-menu-content>
+            <md-menu-item>
+                <md-button ng-disabled="_.size(activeSubGraphEntityMaps) !== 0"
+                           ng-click="showGraphLoadModal($event)">
+                    <md-icon>open_in_browser</md-icon> load...
+                </md-button>
+            </md-menu-item>
+            <md-menu-item>
+                <md-button ng-disabled="_.size(activeSubGraphEntityMaps) === 0"
+                           ng-click="saveGraph($event)">
+                    <md-icon>save</md-icon> save
+                </md-button>
+            </md-menu-item>
+            <md-menu-item>
+                <md-button ng-disabled="_.size(activeSubGraphEntityMaps) === 0"
+                           ng-click="onCancelChanges()">
+                    <md-icon>cancel</md-icon> cancel
+                </md-button>
+            </md-menu-item>
+        </md-menu-content>
+    </md-menu>
+    <md-menu>
+        <button ng-click="$mdOpenMenu()">
+            edit
+        </button>
+        <md-menu-content>
+            <md-menu-item>
+                <md-button ng-disabled="!selectedNode
+                                            ||  selectedNode.entity_type === 'workflow_instance'
+                                            || (selectedNode.entity_type === 'action' && !selectedNode.entity_id.startsWith('UNSAVED'))"
+
+                           ng-click="showEntityModal($event, 'edit')">
+                    <md-icon>mode_edit</md-icon> update selected
+                </md-button>
+            </md-menu-item>
+            <md-menu-divider ng-if="_.size(editOperations) > 0"></md-menu-divider>
+            <md-menu-item ng-if="_.size(editOperations) > 0"
+                          ng-repeat="op in editOperations">
+                <md-button title="{{op.description}}" ng-click="op.func()">
+                    <md-icon>{{op.md_icon}}</md-icon> {{op.name}}
+                </md-button>
+            </md-menu-item>
+        </md-menu-content>
+    </md-menu>
+    <md-menu>
+        <button ng-click="$mdOpenMenu()">
+            add
+        </button>
+        <md-menu-content>
+            <md-menu-item ng-if="_.size(subGraphMap) === 0 && _.size(noEngineSubGraphs) === 0">
+                <md-button disabled="disabled">
+                    n/a
+                </md-button>
+            </md-menu-item>
+            <md-menu-item ng-if="_.size(noEngineSubGraphs) > 0"
+                          ng-repeat="subGraph in noEngineSubGraphs">
+                <md-button title="{{subGraph.description}}"
+                           ng-click="addSubGraph(null, subGraph)">
+                    <md-icon ng-if="subGraph.md_icon">{{subGraph.md_icon}}</md-icon>
+                    <md-icon ng-if="subGraph.icon" style="margin-bottom: 10px">{{subGraph.icon}}</md-icon> {{subGraph.name}}
+                </md-button>
+            </md-menu-item>
+            <md-menu-divider ng-if="_.size(noEngineSubGraphs) > 0 && _.size(subGraphMap) > 0"></md-menu-divider>
+            <md-menu-item ng-if="_.size(subGraphMap) > 0"
+                          ng-repeat="(engine_name, subGraphs) in subGraphMap">
+                <md-menu>
+                    <md-button ng-click="$mdOpenMenu()">
+                        {{engine_name}}
+                    </md-button>
+                    <md-menu-content>
+                        <md-menu-item ng-repeat="subGraph in subGraphs">
+                            <md-button title="{{subGraph.description}}"
+                                       ng-click="addSubGraph(engine_name, subGraph)">
+                                <md-icon ng-if="subGraph.md_icon">{{subGraph.md_icon}}</md-icon>
+                                <md-icon ng-if="subGraph.icon" style="margin-bottom: 10px">{{subGraph.icon}}</md-icon> {{subGraph.name}}
+                            </md-button>
+                        </md-menu-item>
+                    </md-menu-content>
+                </md-menu>
+            </md-menu-item>
+        </md-menu-content>
+    </md-menu>
+    <md-menu>
+        <button ng-click="$mdOpenMenu()">
+            view
+        </button>
+        <md-menu-content>
+            <md-menu-item class="md-indent dt-ml-7">
+                <md-button ng-click="resetLayout()">
+                  reset
+                </md-button>
+            </md-menu-item>
+            <md-menu-item class="md-indent dt-ml-7">
+                <md-menu>
+                    <md-button ng-click="$mdOpenMenu()">
+                        layout
+                    </md-button>
+                    <md-menu-content>
+                        <md-menu-item class="dt-ml-7" type="radio" ng-model="options.layout" value="breadthfirst">breadthfirst</md-menu-item>
+                        <md-menu-item class="dt-ml-7" type="radio" ng-model="options.layout" value="circle">circle</md-menu-item>
+                        <md-menu-item class="dt-ml-7" type="radio" ng-model="options.layout" value="cose-bilkent">cose-bilkent</md-menu-item>
+                        <md-menu-item class="dt-ml-7" type="radio" ng-model="options.layout" value="dagre">dagre</md-menu-item>
+                        <md-menu-item class="dt-ml-7" type="radio" ng-model="options.layout" value="grid">grid</md-menu-item>
+                    </md-menu-content>
+                </md-menu>
+            </md-menu-item>
+            <md-menu-item type="checkbox"
+                          ng-model="liveUpdatesEnabled"
+                          ng-click="toggleLiveUpdatesEnabled()"
+                          class="dt-ml-7">live updates{{ liveUpdatesEnabled && subGraphCounter > 0 ? ' (paused)' : ''}}</md-menu-item>
+            <md-menu-divider ng-if="selectedNode"></md-menu-divider>
+            <md-menu-item ng-if="selectedNode">
+                <md-button ng-click="showEntityModal($event, 'view')">
+                    <md-icon>zoom_in</md-icon> details
+                </md-button>
+            </md-menu-item>
+            <md-menu-item ng-if="selectedNode">
+                <md-button ng-disabled="_.size(activeSubGraphEntityMaps) !== 0"
+                           ng-click="navigateToEntity()">
+                    <md-icon>link</md-icon> entity link
+                </md-button>
+            </md-menu-item>
+        </md-menu-content>
+    </md-menu>
+</md-menu-bar>

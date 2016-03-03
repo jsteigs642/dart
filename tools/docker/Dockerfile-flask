@@ -1,0 +1,31 @@
+FROM ubuntu:15.04
+MAINTAINER datawarehouse <aus-eng-data-warehouse@rmn.com>
+
+RUN apt-get update
+RUN apt-get install -y python-dev python-pip libpq-dev
+
+RUN apt-get install -y wget
+
+RUN mkdir -p /home/root
+RUN cd /home/root
+RUN wget https://bootstrap.pypa.io/get-pip.py
+RUN python get-pip.py
+RUN /usr/local/bin/pip install awscli
+
+ADD /src/python/requirements.txt /src/python/requirements.txt
+
+RUN pip install -r /src/python/requirements.txt
+
+ADD src/python /src/python
+
+RUN mkdir -p /mnt/docker-volumes/dart-web-static
+RUN cp -rp /src/python/dart/web/ui/dist/* /mnt/docker-volumes/dart-web-static/
+VOLUME /mnt/docker-volumes
+
+WORKDIR /src/python/dart/web
+
+ENV PYTHONPATH=/src/python:${PYTHONPATH}
+
+EXPOSE 9191
+
+CMD ["uwsgi", "--ini", "/src/python/dart/web/uwsgi.ini"]

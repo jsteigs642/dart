@@ -1,0 +1,37 @@
+<md-sidenav class="md-sidenav-left dt-navbar"
+            md-component-id="left"
+            ng-click="$mdMedia('gt-sm') ? null : sidenavClose()"
+            md-is-locked-open="$mdMedia('gt-sm')"
+            show-gt-sm
+            flex>
+
+    <md-content>
+        <div class="logo">
+            <div>dart</div>
+            <md-icon>insert_emoticon</md-icon>
+        </div>
+
+        <a ui-sref=".dashboard" ui-sref-active="active"><md-list-item class="md-button">dashboard</md-list-item></a>
+
+        <h2 class="md-subhead dt-menu-heading">managers</h2>
+        <a ui-sref=".managers.datastore" ui-sref-active="active"><md-list-item class="md-button">datastore</md-list-item></a>
+        <a ui-sref=".managers.workflow" ui-sref-active="active"><md-list-item class="md-button">workflow</md-list-item></a>
+
+        <h2 class="md-subhead dt-menu-heading">entities</h2>
+        <a ui-sref=".entities.engines" ui-sref-active="active"><md-list-item class="md-button">engines</md-list-item></a>
+        <a ui-sref=".entities.datasets" ui-sref-active="active"><md-list-item class="md-button">datasets</md-list-item></a>
+        <a ui-sref=".entities.datastores" ui-sref-active="active"><md-list-item class="md-button">datastores</md-list-item></a>
+        <a ui-sref=".entities.actions" ui-sref-active="active"><md-list-item class="md-button">actions</md-list-item></a>
+        <a ui-sref=".entities.workflows" ui-sref-active="active"><md-list-item class="md-button">workflows</md-list-item></a>
+        <a ui-sref=".entities.workflow_instances" ui-sref-active="active"><md-list-item class="md-button">workflow instances</md-list-item></a>
+        <a ui-sref=".entities.subscriptions" ui-sref-active="active"><md-list-item class="md-button">subscriptions</md-list-item></a>
+        <a ui-sref=".entities.triggers" ui-sref-active="active"><md-list-item class="md-button">triggers</md-list-item></a>
+        <a ui-sref=".entities.trigger_types" ui-sref-active="active"><md-list-item class="md-button">trigger types</md-list-item></a>
+        <a ui-sref=".entities.events" ui-sref-active="active"><md-list-item class="md-button">events</md-list-item></a>
+
+        <h2 class="md-subhead dt-menu-heading">tools</h2>
+        <a ui-sref=".tools.graph" ui-sref-active="active"><md-list-item class="md-button">graph</md-list-item></a>
+
+    </md-content>
+
+</md-sidenav>

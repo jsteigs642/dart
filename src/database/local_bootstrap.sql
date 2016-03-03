@@ -1,0 +1,3 @@
+CREATE DATABASE dart;
+CREATE USER dart WITH PASSWORD 'dartis4datamarts';
+GRANT ALL PRIVILEGES ON DATABASE "dart" to dart;

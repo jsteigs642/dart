@@ -1,0 +1,25 @@
+FROM ubuntu:15.04
+MAINTAINER datawarehouse <aus-eng-data-warehouse@rmn.com>
+
+RUN apt-get update
+RUN apt-get install -y python-dev python-pip libpq-dev
+
+RUN apt-get install -y wget
+
+RUN mkdir -p /home/root
+RUN cd /home/root
+RUN wget https://bootstrap.pypa.io/get-pip.py
+RUN python get-pip.py
+RUN /usr/local/bin/pip install awscli
+
+ADD /src/python/requirements.txt /src/python/requirements.txt
+
+RUN pip install -r /src/python/requirements.txt
+
+ADD src/python /src/python
+
+WORKDIR /src/python/dart/engine/redshift
+
+ENV PYTHONPATH=/src/python:${PYTHONPATH}
+
+CMD ["python", "redshift.py"]

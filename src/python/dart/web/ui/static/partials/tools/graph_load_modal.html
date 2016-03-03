@@ -1,0 +1,26 @@
+<md-dialog aria-label="choose node" class="dt-modal">
+    <md-dialog-content>
+        <div class="md-title" flex="30">load graph from entity:</div>
+        <md-autocomplete
+                ng-show="!selectedItem"
+                class="dt-mb40"
+                md-autofocus="true"
+                md-no-cache="true"
+                md-selected-item="selectedItem"
+                md-search-text-change="onSearchTextChange(searchText)"
+                md-search-text="searchText"
+                md-selected-item-change="onSelectedItemChange()"
+                md-items="entity in querySearch(searchText)"
+                md-item-text="entity.name"
+                md-min-length="1"
+                placeholder="search">
+            <md-item-template>
+                <span md-highlight-text="searchText" md-highlight-flags="i">{{entity.name}}</span>
+                <i class="dt-cgr">
+                    &mdash;
+                    <span><b>{{entity.entity_type}}</b>: {{entity.entity_id}}</span>
+                </i>
+            </md-item-template>
+        </md-autocomplete>
+    </md-dialog-content>
+</md-dialog>

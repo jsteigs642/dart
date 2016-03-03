@@ -1,0 +1,506 @@
+#
+# SEE README.md FOR INSTRUCTIONS ON HOW TO USE THIS FILE
+#
+
+flask:
+    dart_host: 0.0.0.0
+    dart_port: 5000
+    DEBUG: false
+    # when this value is set, it will only expose a key for subsequent decryption, e.g.: !decrypt database-uri-stage
+    SQLALCHEMY_DATABASE_URI: ...TBD...
+    SQLALCHEMY_POOL_SIZE: 15
+    SQLALCHEMY_ECHO: false
+
+
+dart:
+    # any value with "!env" will interpolate environment variables, failing if they are empty
+    env_name: !env ${DART_ENV}
+
+    # set your region
+    region: us-east-1
+
+    # enclose this value with quotes to ensure it is interpreted as a string
+    aws_account: '123456789012'
+
+    # this is used to help set iam permissions appropriately
+    queue_prefix: !env dart-${DART_ENV}-
+
+    # don't change this unless AWS changes their ECS api
+    ecs_agent_data_path: /mnt/ecs_agent_data/ecs_agent_data.json
+
+    # this will be the root for datastore metadata (logs, artifacts, etc.)
+    s3_datastores_root: ...TBD...
+
+    # this is the name of the engine taskrunner ecs_cluster
+    engine_taskrunner_ecs_cluster: ...TBD...
+
+    # engines that try to POST/PUT taskDefinitions whose memory requirements exceed this number will fail
+    engine_task_definition_max_total_memory_mb: 4000
+
+    # when running locally, set to true to spawn engines in a process on the same machine as the engine worker
+    use_local_engines: false
+
+    # these users get key admin rights
+    kms_key_admin_arns:
+      - arn:aws:iam::123456789012:user/daniel
+
+    # these users get key usage rights
+    kms_key_user_arns:
+      - arn:aws:iam::123456789012:user/daniel
+
+    # these users get ecr repo usage rights
+    ecr_authorized_user_arns:
+      - arn:aws:iam::123456789012:user/daniel
+
+    # when developing new features that need a new app context entity, add here (name, path, + options)
+    app_context:
+      - name: secrets
+        path: dart.service.secrets.Secrets
+        options:
+            kms_key_arn: ...TBD...
+            secrets_s3_path: ...TBD...
+
+      - name: message_service
+        path: dart.service.message.MessageService
+
+      - name: trigger_broker
+        path: dart.message.broker.SqsJsonMessageBroker
+        options:
+            # ensure this value matches the one in sqs.queue_names below
+            queue_name: !env dart-${DART_ENV}-trigger
+            incoming_message_class: boto.sqs.message.RawMessage
+
+      - name: subscription_broker
+        path: dart.message.broker.SqsJsonMessageBroker
+        options:
+            # ensure this value matches the one in sqs.queue_names below
+            queue_name: !env dart-${DART_ENV}-subscription
+            incoming_message_class: boto.sqs.message.RawMessage
+
+
+triggers:
+    scheduled:
+        cloudwatch_scheduled_events_sns_arn: ...TBD...
+
+
+engines:
+    no_op_engine:
+        config: ...TBD...
+        docker_image: ...TBD...
+        path: dart.engine.no_op.no_op.NoOpEngine
+        options:
+            region: us-east-1
+            dart_host: !env dart-${DART_ENV}-internal.mycompany-internal.com
+            dart_port: 80
+            dart_api_version: 1
+
+    emr_engine:
+        config: ...TBD...
+        docker_image: ...TBD...
+        path: dart.engine.emr.emr.EmrEngine
+        options:
+            ec2_keyname: my-previously-created-ec2-key-pair-name
+            instance_profile: ...TBD...
+            service_role: ...TBD...
+            region: us-east-1
+            cluster_availability_zone: us-east-1b
+            core_node_limit: 30
+            impala_docker_repo_base_url: ...TBD...
+            impala_version: 2.4.0
+            cluster_tags:
+                # these can be whatever you want (resource tracking, etc)
+                Name: dwh-dar-uds
+                Product: dwh
+                Function: dar-uds
+                Accounting: 999-999999
+            dart_host: !env dart-${DART_ENV}-internal.mycompany-internal.com
+            dart_port: 80
+            dart_api_version: 1
+
+    redshift_engine:
+        config: ...TBD...
+        docker_image: ...TBD...
+        path: dart.engine.redshift.redshift.RedshiftEngine
+        options:
+            kms_key_arn: ...TBD...
+            secrets_s3_path: ...TBD...
+            vpc_subnet: rptprd-subnetgroup
+            security_group_ids: [sg-da1233be]
+            region: us-east-1
+            availability_zones: [us-east-1b, us-east-1c]
+            publicly_accessible: true
+            cluster_tags:
+                # these can be whatever you want (resource tracking, etc)
+                - Key: Name
+                  Value: dwh-dar-uds
+                - Key: Product
+                  Value: dwh
+                - Key: Function
+                  Value: dar-uds
+                - Key: Accounting
+                  Value: 999-999999
+            dart_host: !env dart-${DART_ENV}-internal.mycompany-internal.com
+            dart_port: 80
+            dart_api_version: 1
+
+
+local_setup:
+    postgres_user: dart
+    postgres_password: dartis4datamarts
+    postgres_docker_image: postgres:9.4.1
+    elasticmq_docker_image: ...TBD...
+
+
+ecr:
+    policy_template: aws/ecr/ecr-policy-template.json
+    repo_prefix: dart
+    # these must match the Dockerfile suffixes in the tools/docker directory
+    repo_names:
+        - cloudwatchlogs
+        - elasticmq
+        - engine-no_op
+        - engine-emr
+        - engine-redshift
+        - engine-worker
+        - flask
+        - nginx
+        - subscription-worker
+        - trigger-worker
+        - impala-state-store
+        - impala-catalog
+        - impala-server
+
+
+kms:
+    key_arn: ...TBD...
+    key_policy_template: aws/kms/key-policy-template.json
+
+
+s3:
+    config_bucket: !env mycompany-dart-${DART_ENV}-config
+    data_bucket: !env mycompany-dart-${DART_ENV}-data
+
+
+sqs:
+    # ensure these match those in the message brokers in the dart.app_context section above
+    queue_names:
+        trigger_queue: !env 'dart-${DART_ENV}-trigger'
+        subscription_queue: !env 'dart-${DART_ENV}-subscription'
+
+
+email:
+    mailer:
+        host: smtp.gmail.com
+        port: 587
+        # when this value is set, it will only expose a key for subsequent decryption, e.g.: !decrypt email-username
+        usr: ...TBD...
+        # when this value is set, it will only expose a key for subsequent decryption, e.g.: !decrypt email-password
+        pwd: ...TBD...
+        use_tls: true
+        use_ssl: false
+    # if this is true, no email alerts will be sent
+    suppress_send: false
+    from: my_data_warehouse_team@mycompany.com
+    cc_on_error: my_data_warehouse_team@mycompany.com
+
+
+logging:
+    version: 1
+    formatters:
+        verbose:
+            # to prevent premature interpolation, these values will be substituted at runtime:
+            # __DARTBANG__ --> !
+            # __DARTQUOTE__ --> '
+            # __DARTDOLLAR__ --> $
+            format: __DARTBANG__env __DARTQUOTE__role="__DARTDOLLAR__{DART_ROLE}", timestamp="%(asctime)s", category="%(levelname)s", call="%(name)s", details="%(message)s"__DARTQUOTE__
+    handlers:
+        console:
+            class: logging.StreamHandler
+            formatter: verbose
+            level: INFO
+            stream: ext://sys.stdout
+    loggers:
+        __main__:
+            level: INFO
+            handlers: [console]
+            propagate: 0
+        dart:
+            level: INFO
+            handlers: [console]
+            propagate: 0
+        sqlalchemy.engine:
+            level: INFO
+            handlers: [console]
+            propagate: 0
+    root:
+        level: INFO
+        handlers: [console]
+
+
+# these are the cloudformation stack configurations:
+#     - template_body_path is relative to the project root
+#     - boto_args are passed through to the create/update stack calls
+cloudformation_stacks:
+    iam:
+        template_body_path: aws/cloudformation/iam-template.json
+        boto_args:
+            Capabilities: [CAPABILITY_IAM]
+            Tags:
+                - {Key: Name, Value: dwh-dar-web}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-web}
+                - {Key: Accounting, Value: 999-999999}
+
+    s3:
+        template_body_path: aws/cloudformation/s3.json
+        boto_args:
+            Parameters:
+                - {ParameterKey: DartEnvironment, ParameterValue: !env '${DART_ENV}', UsePreviousValue: false}
+                - {ParameterKey: DartConfigBucket, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: DartDataBucket, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: SubscriptionQueueUrl, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: SubscriptionQueueArn, ParameterValue: ...TBD..., UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-web}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-web}
+                - {Key: Accounting, Value: 999-999999}
+
+    sns:
+        template_body_path: aws/cloudformation/sns.json
+        boto_args:
+            Parameters:
+                - {ParameterKey: DartAlertsEmailAddress, ParameterValue: my_data_warehouse_team@mycompany.com, UsePreviousValue: false}
+                - {ParameterKey: DartEnvironment, ParameterValue: !env '${DART_ENV}', UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-web}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-web}
+                - {Key: Accounting, Value: 999-999999}
+
+    logs:
+        template_body_path: aws/cloudformation/logs.json
+        boto_args:
+            Parameters:
+                - {ParameterKey: RetentionInDays, ParameterValue: '60', UsePreviousValue: false}
+                - {ParameterKey: AlarmActions, ParameterValue: ...TBD..., UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-web}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-web}
+                - {Key: Accounting, Value: 999-999999}
+
+    events:
+        template_body_path: aws/cloudformation/events.json
+        boto_args:
+            Parameters:
+                - {ParameterKey: AwsAccountId, ParameterValue: '123456789012', UsePreviousValue: false}
+                - {ParameterKey: DartEnvironment, ParameterValue: !env '${DART_ENV}', UsePreviousValue: false}
+                - {ParameterKey: TriggerQueueUrl, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: TriggerQueueArn, ParameterValue: ...TBD..., UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-web}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-web}
+                - {Key: Accounting, Value: 999-999999}
+
+    rds:
+        template_body_path: aws/cloudformation/rds.json
+        boto_args:
+            Parameters:
+                - {ParameterKey: AvailabilityZone, ParameterValue: us-east-1b, UsePreviousValue: false}
+                - {ParameterKey: DBInstanceClass, ParameterValue: db.m3.medium, UsePreviousValue: false}
+                - {ParameterKey: SubnetIds, ParameterValue: 'subnet-abcd1234,subnet-dcba4321', UsePreviousValue: false}
+                - {ParameterKey: VpcId, ParameterValue: vpc-a1b2c3d4, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp1, ParameterValue: 10.0.0.0/8, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp2, ParameterValue: 172.16.0.0/12, UsePreviousValue: false}
+                - {ParameterKey: AllocatedStorage, ParameterValue: '10', UsePreviousValue: false}
+                - {ParameterKey: BackupRetentionPeriod, ParameterValue: '7', UsePreviousValue: false}
+                - {ParameterKey: Password, ParameterValue: !env '${DART_RDS_PASSWORD}', UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-mst}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-mst}
+                - {Key: Accounting, Value: 999-999999}
+
+    elb-internal:
+        template_body_path: aws/cloudformation/elb-internal.json
+        boto_args:
+            Parameters:
+                - {ParameterKey: Subnets, ParameterValue: 'subnet-abcd1234,subnet-dcba4321', UsePreviousValue: false}
+                - {ParameterKey: VpcId, ParameterValue: vpc-a1b2c3d4, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp1, ParameterValue: 10.0.0.0/8, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp2, ParameterValue: 172.16.0.0/12, UsePreviousValue: false}
+                - {ParameterKey: HostedZoneName, ParameterValue: mycompany-internal.com., UsePreviousValue: false}
+                - {ParameterKey: RecordSetName, ParameterValue: !env 'dart-${DART_ENV}-internal.mycompany-internal.com', UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-web}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-web}
+                - {Key: Accounting, Value: 999-999999}
+
+    elb:
+        template_body_path: aws/cloudformation/elb.json
+        boto_args:
+            Parameters:
+                - {ParameterKey: Subnets, ParameterValue: 'subnet-abcd1234,subnet-dcba4321', UsePreviousValue: false}
+                - {ParameterKey: VpcId, ParameterValue: vpc-a1b2c3d4, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp1, ParameterValue: 10.0.0.0/8, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp2, ParameterValue: 172.16.0.0/12, UsePreviousValue: false}
+                - {ParameterKey: HostedZoneName, ParameterValue: mycompany-internal.com., UsePreviousValue: false}
+                - {ParameterKey: RecordSetName, ParameterValue: !env 'dart-${DART_ENV}.mycompany-internal.com', UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-web}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-web}
+                - {Key: Accounting, Value: 999-999999}
+
+    engine-taskrunner:
+        template_body_path: aws/cloudformation/engine-taskrunner.json
+        user_data_script: aws/userdata/userdata.sh
+        boto_args:
+            Parameters:
+                - {ParameterKey: VpcZoneIdentifier, ParameterValue: 'subnet-abcd1234,subnet-dcba4321', UsePreviousValue: false}
+                - {ParameterKey: AvailabilityZones, ParameterValue: 'us-east-1b,us-east-1c', UsePreviousValue: false}
+                - {ParameterKey: IamInstanceProfile, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: KeyName, ParameterValue: my-previously-created-ec2-key-pair-name, UsePreviousValue: false}
+                - {ParameterKey: EcsAmiId, ParameterValue: ami-cb2305a1, UsePreviousValue: false}
+                - {ParameterKey: InstanceType, ParameterValue: t2.large, UsePreviousValue: false}
+                - {ParameterKey: VpcId, ParameterValue: vpc-a1b2c3d4, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp1, ParameterValue: 10.0.0.0/8, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp2, ParameterValue: 172.16.0.0/12, UsePreviousValue: false}
+                - {ParameterKey: CloudWatchLogsDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-wrk}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-wrk}
+                - {Key: Accounting, Value: 999-999999}
+
+    engine-worker:
+        template_body_path: aws/cloudformation/engine-worker.json
+        user_data_script: aws/userdata/userdata.sh
+        boto_args:
+            Parameters:
+                - {ParameterKey: VpcZoneIdentifier, ParameterValue: 'subnet-abcd1234,subnet-dcba4321', UsePreviousValue: false}
+                - {ParameterKey: AvailabilityZones, ParameterValue: 'us-east-1b,us-east-1c', UsePreviousValue: false}
+                - {ParameterKey: IamInstanceProfile, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: KeyName, ParameterValue: my-previously-created-ec2-key-pair-name, UsePreviousValue: false}
+                - {ParameterKey: EcsAmiId, ParameterValue: ami-cb2305a1, UsePreviousValue: false}
+                - {ParameterKey: InstanceType, ParameterValue: t2.micro, UsePreviousValue: false}
+                - {ParameterKey: VpcId, ParameterValue: vpc-a1b2c3d4, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp1, ParameterValue: 10.0.0.0/8, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp2, ParameterValue: 172.16.0.0/12, UsePreviousValue: false}
+                - {ParameterKey: EngineWorkerDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: CloudWatchLogsDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: DartConfig, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: AwsDefaultRegion, ParameterValue: us-east-1, UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-wrk}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-wrk}
+                - {Key: Accounting, Value: 999-999999}
+
+    subscription-worker:
+        template_body_path: aws/cloudformation/subscription-worker.json
+        user_data_script: aws/userdata/userdata.sh
+        boto_args:
+            Parameters:
+                - {ParameterKey: VpcZoneIdentifier, ParameterValue: 'subnet-abcd1234,subnet-dcba4321', UsePreviousValue: false}
+                - {ParameterKey: AvailabilityZones, ParameterValue: 'us-east-1b,us-east-1c', UsePreviousValue: false}
+                - {ParameterKey: IamInstanceProfile, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: KeyName, ParameterValue: my-previously-created-ec2-key-pair-name, UsePreviousValue: false}
+                - {ParameterKey: EcsAmiId, ParameterValue: ami-cb2305a1, UsePreviousValue: false}
+                - {ParameterKey: InstanceType, ParameterValue: t2.medium, UsePreviousValue: false}
+                - {ParameterKey: VpcId, ParameterValue: vpc-a1b2c3d4, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp1, ParameterValue: 10.0.0.0/8, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp2, ParameterValue: 172.16.0.0/12, UsePreviousValue: false}
+                - {ParameterKey: SubscriptionWorkerDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: CloudWatchLogsDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: DartConfig, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: AwsDefaultRegion, ParameterValue: us-east-1, UsePreviousValue: false}
+                - {ParameterKey: SqsQueueName, ParameterValue: !env 'dart-${DART_ENV}-subscription', UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-wrk}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-wrk}
+                - {Key: Accounting, Value: 999-999999}
+
+    trigger-worker:
+        template_body_path: aws/cloudformation/trigger-worker.json
+        user_data_script: aws/userdata/userdata.sh
+        boto_args:
+            Parameters:
+                - {ParameterKey: VpcZoneIdentifier, ParameterValue: 'subnet-abcd1234,subnet-dcba4321', UsePreviousValue: false}
+                - {ParameterKey: AvailabilityZones, ParameterValue: 'us-east-1b,us-east-1c', UsePreviousValue: false}
+                - {ParameterKey: IamInstanceProfile, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: KeyName, ParameterValue: my-previously-created-ec2-key-pair-name, UsePreviousValue: false}
+                - {ParameterKey: EcsAmiId, ParameterValue: ami-cb2305a1, UsePreviousValue: false}
+                - {ParameterKey: InstanceType, ParameterValue: t2.micro, UsePreviousValue: false}
+                - {ParameterKey: VpcId, ParameterValue: vpc-a1b2c3d4, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp1, ParameterValue: 10.0.0.0/8, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp2, ParameterValue: 172.16.0.0/12, UsePreviousValue: false}
+                - {ParameterKey: TriggerWorkerDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: CloudWatchLogsDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: DartConfig, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: AwsDefaultRegion, ParameterValue: us-east-1, UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-wrk}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-wrk}
+                - {Key: Accounting, Value: 999-999999}
+
+    web-internal:
+        template_body_path: aws/cloudformation/web.json
+        user_data_script: aws/userdata/userdata.sh
+        boto_args:
+            Parameters:
+                - {ParameterKey: VpcZoneIdentifier, ParameterValue: 'subnet-abcd1234,subnet-dcba4321', UsePreviousValue: false}
+                - {ParameterKey: AvailabilityZones, ParameterValue: 'us-east-1b,us-east-1c', UsePreviousValue: false}
+                - {ParameterKey: IamInstanceProfile, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: KeyName, ParameterValue: my-previously-created-ec2-key-pair-name, UsePreviousValue: false}
+                - {ParameterKey: EcsAmiId, ParameterValue: ami-cb2305a1, UsePreviousValue: false}
+                - {ParameterKey: InstanceType, ParameterValue: m3.medium, UsePreviousValue: false}
+                - {ParameterKey: VpcId, ParameterValue: vpc-a1b2c3d4, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp1, ParameterValue: 10.0.0.0/8, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp2, ParameterValue: 172.16.0.0/12, UsePreviousValue: false}
+                - {ParameterKey: FlaskWorkerDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: NginxWorkerDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: CloudWatchLogsDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: DartConfig, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: AwsDefaultRegion, ParameterValue: us-east-1, UsePreviousValue: false}
+                - {ParameterKey: DartWebVersion, ParameterValue: 1.0.0, UsePreviousValue: false}
+                - {ParameterKey: WebEcsServiceLoadBalancerName, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: WebEcsServiceRoleName, ParameterValue: ...TBD..., UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-web}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-web}
+                - {Key: Accounting, Value: 999-999999}
+
+    web:
+        template_body_path: aws/cloudformation/web.json
+        user_data_script: aws/userdata/userdata.sh
+        boto_args:
+            Parameters:
+                - {ParameterKey: VpcZoneIdentifier, ParameterValue: 'subnet-abcd1234,subnet-dcba4321', UsePreviousValue: false}
+                - {ParameterKey: AvailabilityZones, ParameterValue: 'us-east-1b,us-east-1c', UsePreviousValue: false}
+                - {ParameterKey: IamInstanceProfile, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: KeyName, ParameterValue: my-previously-created-ec2-key-pair-name, UsePreviousValue: false}
+                - {ParameterKey: EcsAmiId, ParameterValue: ami-cb2305a1, UsePreviousValue: false}
+                - {ParameterKey: InstanceType, ParameterValue: m3.medium, UsePreviousValue: false}
+                - {ParameterKey: VpcId, ParameterValue: vpc-a1b2c3d4, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp1, ParameterValue: 10.0.0.0/8, UsePreviousValue: false}
+                - {ParameterKey: OpenCidrIp2, ParameterValue: 172.16.0.0/12, UsePreviousValue: false}
+                - {ParameterKey: FlaskWorkerDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: NginxWorkerDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: CloudWatchLogsDockerImage, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: DartConfig, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: AwsDefaultRegion, ParameterValue: us-east-1, UsePreviousValue: false}
+                - {ParameterKey: DartWebVersion, ParameterValue: 1.0.0, UsePreviousValue: false}
+                - {ParameterKey: WebEcsServiceLoadBalancerName, ParameterValue: ...TBD..., UsePreviousValue: false}
+                - {ParameterKey: WebEcsServiceRoleName, ParameterValue: ...TBD..., UsePreviousValue: false}
+            Tags:
+                - {Key: Name, Value: dwh-dar-web}
+                - {Key: Product, Value: dwh}
+                - {Key: Function, Value: dar-web}
+                - {Key: Accounting, Value: 999-999999}

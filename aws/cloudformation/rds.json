@@ -1,0 +1,71 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Dart rds stack",
+    "Parameters": {
+        "AvailabilityZone": { "Type": "String", "Description": "AvailabilityZone for this RDS instance" },
+        "DBInstanceClass": { "Type": "String", "Description": "DBInstanceClass for this RDS instance" },
+        "SubnetIds": { "Type": "CommaDelimitedList", "Description": "SubnetIds for the DBSubnetGroup" },
+        "VpcId": { "Type": "String", "Description": "ASG SecurityGroup VpcId" },
+        "OpenCidrIp1": { "Type": "String", "Description": "SecurityGroup cidr block that is open on 5432" },
+        "OpenCidrIp2": { "Type": "String", "Description": "SecurityGroup cidr block that is open on 5432" },
+        "AllocatedStorage": { "Type": "Number", "Description": "RDS AllocatedStorage size" },
+        "BackupRetentionPeriod": { "Type": "Number", "Description": "RDS BackupRetentionPeriod" },
+        "Password": {
+            "Type": "String",
+            "Description": "The database master password",
+            "AllowedPattern": "[a-zA-Z0-9]*",
+            "MinLength": 5,
+            "MaxLength": 20,
+            "NoEcho": true
+        }
+    },
+    "Resources": {
+        "DBInstance": {
+            "Type": "AWS::RDS::DBInstance",
+            "Properties": {
+                "AllocatedStorage": { "Ref": "AllocatedStorage"},
+                "DBSubnetGroupName": { "Ref": "DBSubnetGroup"},
+                "AvailabilityZone": { "Ref": "AvailabilityZone" },
+                "BackupRetentionPeriod": { "Ref": "BackupRetentionPeriod" },
+                "DBInstanceClass": { "Ref": "DBInstanceClass" },
+                "DBName": "dart",
+                "Engine": "postgres",
+                "EngineVersion": "9.4.1",
+                "LicenseModel": "postgresql-license",
+                "MasterUsername": "dart",
+                "MasterUserPassword": { "Ref": "Password" },
+                "MultiAZ": false,
+                "Port": 5432,
+                "PreferredBackupWindow": "09:00-09:30",
+                "PreferredMaintenanceWindow": "sat:09:31-sat:10:01",
+                "VPCSecurityGroups": [ { "Ref": "SecurityGroup" } ]
+            }
+        },
+        "DBSubnetGroup": {
+            "Type": "AWS::RDS::DBSubnetGroup",
+            "Properties": {
+                "DBSubnetGroupDescription": "Dart RDS DBSubnetGroup",
+                "SubnetIds": { "Ref": "SubnetIds" }
+            }
+        },
+        "SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "dart metadata store security group",
+                "VpcId": { "Ref": "VpcId" },
+                "SecurityGroupIngress": [
+                    { "IpProtocol": "tcp", "FromPort": 5432, "ToPort": 5432, "CidrIp": "10.0.0.0/8" },
+                    { "IpProtocol": "tcp", "FromPort": 5432, "ToPort": 5432, "CidrIp": "172.16.0.0/12" },
+                    { "IpProtocol": "tcp", "FromPort": 5432, "ToPort": 5432, "CidrIp": { "Ref": "OpenCidrIp1" } },
+                    { "IpProtocol": "tcp", "FromPort": 5432, "ToPort": 5432, "CidrIp": { "Ref": "OpenCidrIp2" } }
+                ]
+            }
+        }
+    },
+    "Outputs" : {
+        "DbHost" : {
+            "Description": "The connection endpoint for the database",
+            "Value" : { "Fn::GetAtt" : [ "DBInstance", "Endpoint.Address" ]}
+        }
+    }
+}

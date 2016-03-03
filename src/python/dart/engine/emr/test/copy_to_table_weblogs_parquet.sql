@@ -1,0 +1,8 @@
+INVALIDATE METADATA;
+
+SET COMPRESSION_CODEC=GZIP;
+
+INSERT INTO TABLE weblogs_parquet
+PARTITION (year, week, day)
+SELECT *
+FROM weblogs_stage;

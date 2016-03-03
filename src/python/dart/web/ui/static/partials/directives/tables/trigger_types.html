@@ -1,0 +1,37 @@
+<md-data-table-container>
+    <table md-data-table md-progress="$p">
+        <thead>
+        <tr>
+            <th name=""></th>
+            <th name="name"></th>
+            <th name="description"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="e in response.results">
+            <td>
+                <md-menu md-offset="-5 -5">
+                    <i class="material-icons"
+                       aria-label="action menu"
+                       ng-click="$mdOpenMenu($event)">more_vert</i>
+                    <md-menu-content width="4">
+                        <md-menu-item>
+                            <md-button ng-click="showEntityModal($event, e, 'view')">
+                                <md-icon>zoom_in</md-icon> view details
+                            </md-button>
+                        </md-menu-item>
+                    </md-menu-content>
+                </md-menu>
+            </td>
+            <td>{{e.name}}</td>
+            <td>{{e.description}}</td>
+        </tr>
+        </tbody>
+    </table>
+</md-data-table-container>
+
+<md-data-table-pagination ng-if="!options.hideControls"
+                          md-limit="query.limit"
+                          md-page="query.page"
+                          md-total="{{response.total}}"
+                          md-trigger="onPaginationChange"></md-data-table-pagination>

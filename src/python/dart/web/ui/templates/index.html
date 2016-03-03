@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <!-- build:css styles/vendor.css -->
+    <!-- bower:css -->
+    <link rel="stylesheet" href="static/bower_components/angular-material/angular-material.css" />
+    <link rel="stylesheet" href="static/bower_components/angular-material-data-table/dist/md-data-table.min.css" />
+    <link rel="stylesheet" href="static/bower_components/bootstrap/dist/css/bootstrap.css" />
+    <!-- endbower -->
+    <!-- endbuild -->
+    <!-- build:css styles/main.css -->
+    <link rel="stylesheet" href="static/css/main.css">
+    <!-- endbuild -->
+</head>
+
+<body ng-app="dartApp" layout="column" ng-strict-di>
+
+<section layout="row" flex>
+    <div ui-view="navbar" layout="column"></div>
+
+    <md-content flex>
+        <div layout="column">
+            <div ui-view="header"></div>
+            <div ui-view="content" layout-padding class="dt-content"></div>
+        </div>
+    </md-content>
+</section>
+
+<div ui-view="footer"></div>
+
+<!-- build:js scripts/vendor.js -->
+<!-- bower:js -->
+<script src="static/bower_components/jquery/dist/jquery.js"></script>
+<script src="static/bower_components/angular/angular.js"></script>
+<script src="static/bower_components/angular-animate/angular-animate.js"></script>
+<script src="static/bower_components/angular-cookies/angular-cookies.js"></script>
+<script src="static/bower_components/angular-aria/angular-aria.js"></script>
+<script src="static/bower_components/angular-material/angular-material.js"></script>
+<script src="static/bower_components/angular-material-data-table/dist/md-data-table.min.js"></script>
+<script src="static/bower_components/angular-resource/angular-resource.js"></script>
+<script src="static/bower_components/angular-sanitize/angular-sanitize.js"></script>
+<script src="static/bower_components/tv4/tv4.js"></script>
+<script src="static/bower_components/objectpath/lib/ObjectPath.js"></script>
+<script src="static/bower_components/angular-schema-form/dist/schema-form.js"></script>
+<script src="static/bower_components/angular-schema-form/dist/bootstrap-decorator.js"></script>
+<script src="static/bower_components/angular-touch/angular-touch.js"></script>
+<script src="static/bower_components/angular-ui-router/release/angular-ui-router.js"></script>
+<script src="static/bower_components/angular-utils-ui-breadcrumbs/uiBreadcrumbs.js"></script>
+<script src="static/bower_components/bootstrap/dist/js/bootstrap.js"></script>
+<script src="static/bower_components/cytoscape/dist/cytoscape.js"></script>
+<script src="static/bower_components/lodash/lodash.js"></script>
+<script src="static/bower_components/graphlib/dist/graphlib.core.js"></script>
+<script src="static/bower_components/dagre/dist/dagre.core.js"></script>
+<script src="static/bower_components/dagre/dist/dagre.core.min.js"></script>
+<script src="static/bower_components/cytoscape-dagre/cytoscape-dagre.js"></script>
+<!-- endbower -->
+<!-- endbuild -->
+
+<!-- build:js_concat_only scripts/vendor_jco.js -->
+<script src="static/bower_components/cytoscape-cose-bilkent/cytoscape-cose-bilkent.js"></script>
+<!-- endbuild -->
+
+<!-- build:js scripts/scripts.js -->
+<script src="static/js/patches/angular-material-1.0.0-autocomplete-patched.js"></script>
+<script src="static/js/patches/angular-material-1.0.0-chips-patched.js"></script>
+<script src="static/js/patches/angular-material-1.0.0-menuBar-patched.js"></script>
+
+<script src="static/js/app.js"></script>
+
+<script src="static/js/controllers/entities/_module.js"></script>
+<script src="static/js/controllers/entities/actions.js"></script>
+<script src="static/js/controllers/entities/datasets.js"></script>
+<script src="static/js/controllers/entities/datastores.js"></script>
+<script src="static/js/controllers/entities/engines.js"></script>
+<script src="static/js/controllers/entities/events.js"></script>
+<script src="static/js/controllers/entities/subscriptions.js"></script>
+<script src="static/js/controllers/entities/trigger_types.js"></script>
+<script src="static/js/controllers/entities/triggers.js"></script>
+<script src="static/js/controllers/entities/workflow_instances.js"></script>
+<script src="static/js/controllers/entities/workflows.js"></script>
+
+<script src="static/js/controllers/managers/_module.js"></script>
+<script src="static/js/controllers/managers/datastore.js"></script>
+<script src="static/js/controllers/managers/workflow.js"></script>
+
+<script src="static/js/controllers/tools/_module.js"></script>
+<script src="static/js/controllers/tools/graph.js"></script>
+
+<script src="static/js/controllers/entity_modal.js"></script>
+<script src="static/js/controllers/graph_load_modal.js"></script>
+<script src="static/js/controllers/header.js"></script>
+<script src="static/js/controllers/navbar.js"></script>
+
+<script src="static/js/directives/create_new/_module.js"></script>
+<script src="static/js/directives/create_new/actions.js"></script>
+<script src="static/js/directives/create_new/datasets.js"></script>
+<script src="static/js/directives/create_new/datastores.js"></script>
+<script src="static/js/directives/create_new/events.js"></script>
+<script src="static/js/directives/create_new/subscriptions.js"></script>
+<script src="static/js/directives/create_new/triggers.js"></script>
+<script src="static/js/directives/create_new/workflows.js"></script>
+
+<script src="static/js/directives/tables/_module.js"></script>
+<script src="static/js/directives/tables/actions.js"></script>
+<script src="static/js/directives/tables/datasets.js"></script>
+<script src="static/js/directives/tables/datastores.js"></script>
+<script src="static/js/directives/tables/engines.js"></script>
+<script src="static/js/directives/tables/events.js"></script>
+<script src="static/js/directives/tables/subscriptions.js"></script>
+<script src="static/js/directives/tables/trigger_types.js"></script>
+<script src="static/js/directives/tables/triggers.js"></script>
+<script src="static/js/directives/tables/workflow_instances.js"></script>
+<script src="static/js/directives/tables/workflows.js"></script>
+
+<script src="static/js/directives/graph/_module.js"></script>
+<script src="static/js/directives/graph/graph.js"></script>
+<script src="static/js/directives/graph/menu_bar.js"></script>
+
+<script src="static/js/services/entities/_module.js"></script>
+<script src="static/js/services/entities/actions.js"></script>
+<script src="static/js/services/entities/datasets.js"></script>
+<script src="static/js/services/entities/datastores.js"></script>
+<script src="static/js/services/entities/engines.js"></script>
+<script src="static/js/services/entities/events.js"></script>
+<script src="static/js/services/entities/subscriptions.js"></script>
+<script src="static/js/services/entities/trigger_types.js"></script>
+<script src="static/js/services/entities/triggers.js"></script>
+<script src="static/js/services/entities/workflow_instances.js"></script>
+<script src="static/js/services/entities/workflows.js"></script>
+
+<script src="static/js/services/entity_modal.js"></script>
+<script src="static/js/services/filter.js"></script>
+<script src="static/js/services/graph.js"></script>
+<script src="static/js/services/graph_load_modal.js"></script>
+<script src="static/js/services/utils.js"></script>
+<!-- endbuild -->
+</body>
+</html>

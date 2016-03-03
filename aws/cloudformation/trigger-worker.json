@@ -1,0 +1,116 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Dart trigger worker stack",
+    "Parameters": {
+        "VpcZoneIdentifier": { "Type": "CommaDelimitedList", "Description": "ASG VPCZoneIdentifier" },
+        "AvailabilityZones": { "Type": "CommaDelimitedList", "Description": "ASG AvailabilityZones" },
+        "IamInstanceProfile": { "Type": "String", "Description": "ASG LaunchConfiguration IamInstanceProfile" },
+        "KeyName": { "Type": "String", "Description": "ASG LaunchConfiguration KeyName" },
+        "EcsAmiId": { "Type": "String", "Description": "ECS AMI ImageId" },
+        "InstanceType": { "Type": "String", "Description": "ASG LaunchConfiguration InstanceType" },
+        "VpcId": { "Type": "String", "Description": "ASG SecurityGroup VpcId" },
+        "OpenCidrIp1": { "Type": "String", "Description": "ASG LaunchConfiguration SecurityGroup cidr block that is open on 22" },
+        "OpenCidrIp2": { "Type": "String", "Description": "ASG LaunchConfiguration SecurityGroup cidr block that is open on 22" },
+        "TriggerWorkerDockerImage": { "Type": "String", "Description": "trigger worker docker image" },
+        "CloudWatchLogsDockerImage": { "Type": "String", "Description": "cloudwatchlogs docker image" },
+        "DartConfig": { "Type": "String", "Description": "DART_CONFIG environment variable for the trigger worker" },
+        "AwsDefaultRegion": { "Type": "String", "Description": "AWS_DEFAULT_REGION environment variable for the trigger worker" }
+    },
+    "Resources": {
+        "EcsCluster": {
+            "Type": "AWS::ECS::Cluster"
+        },
+        "TriggerWorkerTaskDefinition": {
+            "Type": "AWS::ECS::TaskDefinition",
+            "Properties": {
+                "Volumes": [ { "Name": "ecs-agent-data", "Host": { "SourcePath": "/var/lib/ecs/data" } } ],
+                "ContainerDefinitions": [
+                    {
+                        "Name": "dart-trigger-worker",
+                        "Image": { "Ref": "TriggerWorkerDockerImage" },
+                        "Cpu": 64,
+                        "Memory": 256,
+                        "MountPoints": [ { "SourceVolume": "ecs-agent-data", "ContainerPath": "/mnt/ecs_agent_data", "ReadOnly": true } ],
+                        "Environment": [
+                            { "Name": "DART_ROLE", "Value": "worker:trigger" },
+                            { "Name": "DART_CONFIG", "Value": { "Ref": "DartConfig" } },
+                            { "Name": "AWS_DEFAULT_REGION", "Value": { "Ref": "AwsDefaultRegion" } }
+                        ]
+                    }
+                ]
+            }
+        },
+        "CloudWatchLogsTaskDefinition": {
+            "Type": "AWS::ECS::TaskDefinition",
+            "Properties": {
+                "Volumes": [ { "Name": "ecs-instance-logs", "Host": { "SourcePath": "/var/log" } } ],
+                "ContainerDefinitions": [
+                    {
+                        "Name": "cloudwatchlogs",
+                        "Image": { "Ref": "CloudWatchLogsDockerImage" },
+                        "Cpu": 50,
+                        "Memory": 64,
+                        "PortMappings": [ { "HostPort": 9999, "ContainerPort": 9999 } ],
+                        "MountPoints": [ { "SourceVolume": "ecs-instance-logs", "ContainerPath": "/mnt/ecs_instance_logs", "ReadOnly": true } ]
+                    }
+                ]
+            }
+        },
+         "TriggerWorkerEcsService": {
+            "Type": "AWS::ECS::Service",
+            "Properties": {
+                "Cluster": { "Ref": "EcsCluster" },
+                "DesiredCount": 1,
+                "TaskDefinition": { "Ref": "TriggerWorkerTaskDefinition" }
+            }
+        },
+         "CloudWatchLogsEcsService": {
+            "Type": "AWS::ECS::Service",
+            "Properties": {
+                "Cluster": { "Ref": "EcsCluster" },
+                "DesiredCount": 1,
+                "TaskDefinition": { "Ref": "CloudWatchLogsTaskDefinition" }
+            }
+        },
+        "AutoScalingGroup": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "LaunchConfigurationName": { "Ref": "LaunchConfiguration" },
+                "VPCZoneIdentifier": { "Ref": "VpcZoneIdentifier" },
+                "AvailabilityZones": { "Ref": "AvailabilityZones" },
+                "MinSize": 1,
+                "MaxSize": 1,
+                "HealthCheckType": "EC2",
+                "HealthCheckGracePeriod": 900,
+                "Tags": [
+                    { "Key": "dart:ecs-cluster", "Value": { "Ref": "EcsCluster" }, "PropagateAtLaunch": true }
+                ]
+            }
+        },
+        "LaunchConfiguration": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Properties": {
+                "KeyName": { "Ref": "KeyName" },
+                "ImageId": { "Ref": "EcsAmiId" },
+                "AssociatePublicIpAddress": true,
+                "SecurityGroups": [ { "Ref": "SecurityGroup" } ],
+                "IamInstanceProfile": { "Ref": "IamInstanceProfile" },
+                "InstanceType": { "Ref": "InstanceType" },
+                "UserData": "{USER_DATA_CONTENTS}"
+            }
+        },
+        "SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "dart trigger worker security group",
+                "VpcId": { "Ref": "VpcId" },
+                "SecurityGroupIngress": [
+                    { "IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "CidrIp": "10.0.0.0/8" },
+                    { "IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "CidrIp": "172.16.0.0/12" },
+                    { "IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "CidrIp": { "Ref": "OpenCidrIp1" } },
+                    { "IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "CidrIp": { "Ref": "OpenCidrIp2" } }
+                ]
+            }
+        }
+    }
+}

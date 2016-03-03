@@ -1,0 +1,2 @@
+class ActionFailedButConsumeSuccessfulException(Exception):
+    pass

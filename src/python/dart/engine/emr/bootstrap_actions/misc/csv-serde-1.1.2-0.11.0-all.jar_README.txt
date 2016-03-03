@@ -1,0 +1,3 @@
+The csv-serde-1.1.2-0.11.0-all.jar in this directory was built from this repository: https://github.com/dannymcpherson/csv-serde
+
+The license has been copied (in this folder as csv-serde-1.1.2-0.11.0-all.jar_LICENSE.txt) in order to comply with Apache License, Version 2.0.

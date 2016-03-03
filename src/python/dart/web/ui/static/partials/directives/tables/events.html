@@ -1,0 +1,75 @@
+<md-input-container md-no-float ng-if="!options.hideFilters" layout-fill>
+    <md-chips ng-model="filters">
+        <md-autocomplete placeholder="filter"
+                         ng-init="choices = getFilterChoices(searchText)"
+                         md-min-length="0"
+                         md-autoselect="true"
+                         md-items="choice in choices"
+                         md-item-text="choice"
+                         md-search-text="searchText"
+                         md-search-text-change="choices = getFilterChoices(searchText)"
+                         >
+            <md-item-template>
+                <span md-highlight-text="searchText">{{choice}}</span>
+            </md-item-template>
+        </md-autocomplete>
+    </md-chips>
+</md-input-container>
+
+
+<md-data-table-container>
+    <table md-data-table md-progress="$p">
+        <thead>
+        <tr>
+            <th name=""></th>
+            <th name="id"></th>
+            <th name="name"></th>
+            <th name="state"></th>
+            <th name="description"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="e in response.results">
+            <td>
+                <md-menu md-offset="-5 -5">
+                    <i class="material-icons"
+                       aria-label="action menu"
+                       ng-click="$mdOpenMenu($event)">more_vert</i>
+                    <md-menu-content width="4">
+                        <md-menu-item>
+                            <md-button ng-click="showEntityModal($event, e, 'view')">
+                                <md-icon>zoom_in</md-icon> view details
+                            </md-button>
+                        </md-menu-item>
+                        <md-menu-item>
+                            <md-button ng-click="showEntityModal($event, e, 'edit')">
+                                <md-icon>mode_edit</md-icon> edit
+                            </md-button>
+                        </md-menu-item>
+                        <md-menu-item>
+                            <md-button ng-click="showEntityModal($event, e, 'duplicate')">
+                                <md-icon>content_copy</md-icon> duplicate
+                            </md-button>
+                        </md-menu-item>
+                        <md-menu-item>
+                            <md-button ng-click="$state.go('app.tools.graph', {t:'event', id:e.id})">
+                                <md-icon>share</md-icon> graph
+                            </md-button>
+                        </md-menu-item>
+                    </md-menu-content>
+                </md-menu>
+            </td>
+            <td>{{e.id}}</td>
+            <td>{{e.data.name}}</td>
+            <td>{{e.data.state}}</td>
+            <td>{{e.data.description}}</td>
+        </tr>
+        </tbody>
+    </table>
+</md-data-table-container>
+
+<md-data-table-pagination ng-if="!options.hideControls"
+                          md-limit="query.limit"
+                          md-page="query.page"
+                          md-total="{{response.total}}"
+                          md-trigger="onPaginationChange"></md-data-table-pagination>

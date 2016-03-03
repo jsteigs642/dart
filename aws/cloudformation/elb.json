@@ -1,0 +1,77 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Dart elb stack",
+    "Parameters": {
+        "Subnets": { "Type": "CommaDelimitedList", "Description": "ELB subnets" },
+        "VpcId": { "Type": "String", "Description": "ELB SecurityGroup VpcId" },
+        "OpenCidrIp1": { "Type": "String", "Description": "ELB SecurityGroup cidr block that is open on 80" },
+        "OpenCidrIp2": { "Type": "String", "Description": "ELB SecurityGroup cidr block that is open on 80" },
+        "HostedZoneName": { "Type": "String", "Description": "RecordSetGroup hosted zone name" },
+        "RecordSetName": { "Type": "String", "Description": "RecordSetGroup hosted zone name" }
+    },
+    "Resources": {
+        "ElasticLoadBalancer": {
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties": {
+                "CrossZone": true,
+                "Scheme": "internet-facing",
+                "Subnets": { "Ref": "Subnets" },
+                "SecurityGroups": [ { "Ref": "ElbSecurityGroup" } ],
+                "Listeners": [ {
+                    "LoadBalancerPort": 80,
+                    "InstancePort": 8080,
+                    "Protocol": "HTTP",
+                    "PolicyNames": [ "DartWebVersionCookieStickinessPolicy" ]
+                } ],
+                "HealthCheck": {
+                    "Target": "HTTP:8080/",
+                    "HealthyThreshold": 2,
+                    "UnhealthyThreshold": 7,
+                    "Interval": 30,
+                    "Timeout": 10
+                },
+                "ConnectionDrainingPolicy": {
+                    "Enabled": true,
+                    "Timeout": 300
+                },
+                "AppCookieStickinessPolicy": [{ "CookieName": "dart.web.version", "PolicyName": "DartWebVersionCookieStickinessPolicy" }]
+            }
+        },
+        "ElbSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "dart elb security group",
+                "VpcId": { "Ref": "VpcId" },
+                "SecurityGroupIngress": [
+                    { "IpProtocol": "tcp", "FromPort": 80, "ToPort": 80, "CidrIp": "10.0.0.0/8" },
+                    { "IpProtocol": "tcp", "FromPort": 80, "ToPort": 80, "CidrIp": "172.16.0.0/12" },
+                    { "IpProtocol": "tcp", "FromPort": 80, "ToPort": 80, "CidrIp": { "Ref": "OpenCidrIp1" }},
+                    { "IpProtocol": "tcp", "FromPort": 80, "ToPort": 80, "CidrIp": { "Ref": "OpenCidrIp2" }}
+                ]
+            }
+        },
+        "ElbRecordSetGroup": {
+            "Type": "AWS::Route53::RecordSetGroup",
+            "Properties": {
+                "HostedZoneName": { "Ref": "HostedZoneName" },
+                "RecordSets": [
+                    {
+                        "Name": { "Ref": "RecordSetName" },
+                        "Type": "A",
+                        "AliasTarget": {
+                            "EvaluateTargetHealth": false,
+                            "DNSName": { "Fn::GetAtt": [ "ElasticLoadBalancer", "CanonicalHostedZoneName" ] },
+                            "HostedZoneId": { "Fn::GetAtt": [ "ElasticLoadBalancer", "CanonicalHostedZoneNameID" ] }
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs" : {
+        "ElbResourceName" : {
+            "Description": "The resource name of this ELB",
+            "Value" : { "Ref" : "ElasticLoadBalancer" }
+        }
+    }
+}
