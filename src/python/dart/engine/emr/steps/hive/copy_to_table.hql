@@ -19,6 +19,7 @@ SET mapred.min.split.size = 64000000;
 SET mapreduce.map.java.opts = -Xmx1024m -XX:-UseGCOverheadLimit -Xss128m;
 SET mapreduce.map.memory.mb = 1600;
 SET parquet.block.size = 65217728;
+{set_hive_vars}
 
 ADD JAR /usr/lib/hive/lib/hive-contrib.jar;
 

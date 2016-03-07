@@ -16,7 +16,7 @@ def run_impala_script(emr_engine, datastore, action):
     steps = prepare_run_impala_script_steps(dry_run, datastore, action, action.data.args['script_contents'])
 
     if dry_run:
-        emr_engine.dart.patch_action(action, progress=1, extra_data={'steps': steps})
+        emr_engine.dart.patch_action(action, progress=1, extra_data={'steps': [s.to_dict() for s in steps]})
         return
 
     run_steps(emr_engine, datastore, action, steps)

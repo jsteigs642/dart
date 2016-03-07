@@ -54,7 +54,7 @@ class TestHiveTransformJsonToTableStep(unittest.TestCase):
         call('mkdir -p /tmp/dart-emr-test/hive/')
         this_path = os.path.dirname(os.path.abspath(__file__))
         shutil.copyfile(this_path + '/../../../engine/emr/steps/hive/copy_to_table.hql', '/tmp/dart-emr-test/hive/copy_to_table.hql')
-        hive_copy_to_table(ds, 'weblogs_stage', ds, 'weblogs', 's3://test', '/tmp/dart-emr-test/', 'actionid123', 1, 1)
+        hive_copy_to_table(ds, 'weblogs_stage', ds, 'weblogs', 's3://test', '/tmp/dart-emr-test/', 'actionid123', None, 1, 1)
 
         with open(os.path.join(this_path, 'copy_to_table_weblogs.hql')) as f:
             expected_contents = f.read()

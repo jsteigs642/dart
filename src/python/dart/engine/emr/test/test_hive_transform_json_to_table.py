@@ -84,7 +84,7 @@ class TestHiveTransformJsonToTableStep(unittest.TestCase):
         for c in stage_dataset.data.columns:
             c.data_type = DataType.STRING
 
-        hive_copy_to_table(stage_dataset, 'owen_eu_stage', target_dataset, 'owen_eu', 's3://test', '/tmp/dart-emr-test/', action_id, 1, 1)
+        hive_copy_to_table(stage_dataset, 'owen_eu_stage', target_dataset, 'owen_eu', 's3://test', '/tmp/dart-emr-test/', action_id, None, 1, 1)
 
         with open(os.path.join(this_path, 'copy_to_table_owen_eu.hql')) as f:
             expected_contents = f.read()

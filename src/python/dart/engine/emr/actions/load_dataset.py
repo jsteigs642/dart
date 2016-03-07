@@ -1,16 +1,16 @@
 import functools
 import shutil
 import tempfile
-import itertools
 
 import boto
+from dart.engine.emr.mappings import dynamodb_column_type
 
 from dart.engine.emr.step_runner import run_steps
 from dart.engine.emr.steps import prepare_step_paths, python_fix_partition_folder_names, hive_copy_to_table, \
     impala_copy_to_table, hive_run_script_contents_step, StepWrapper
 from dart.engine.emr.steps import s3distcp_files_step, hive_table_definition_step,\
     hive_msck_repair_table_step, impala_invalidate_metadata_step
-from dart.model.dataset import Dataset, DataFormat, RowFormat, DataType, FileFormat, Compression
+from dart.model.dataset import Dataset, DataFormat, RowFormat, DataType, FileFormat, Compression, Column
 from dart.util.s3 import yield_s3_keys, get_s3_path, s3_copy_recursive
 from dart.util.s3 import get_bucket
 
@@ -22,24 +22,19 @@ def load_dataset(emr_engine, datastore, action):
     :type action: dart.model.action.Action
     """
     dataset = emr_engine.dart.get_dataset(action.data.args['dataset_id'])
-    generator_seed = load_dataset_s3_path_and_file_size_generator(emr_engine, action, dataset)
+    generator = load_dataset_s3_path_and_file_size_generator(emr_engine, action, dataset)
     dry_run = datastore.data.args['dry_run']
-
-    generator, generator2 = itertools.tee(generator_seed)
     steps = prepare_load_dataset_steps(dry_run, action.data.args, datastore, dataset, action.id, generator)
-
     if dry_run:
-        emr_engine.dart.patch_action(action, progress=1, extra_data={
-            'steps': steps,
-            'first_5_s3_paths_and_file_sizes': list(itertools.islice(generator2, 5)),
-        })
+        emr_engine.dart.patch_action(action, progress=1, extra_data={'steps': [s.to_dict() for s in steps]})
         return
 
     run_steps(emr_engine, datastore, action, steps)
     emr_engine.dart.patch_action(action, progress=1)
 
 
-def prepare_load_dataset_steps(dry_run, args_by_name, datastore, dataset, action_id, s3_path_and_file_size_gen):
+def prepare_load_dataset_steps(dry_run, args_by_name, datastore, dataset, action_id, s3_path_and_file_size_gen,
+                               target_is_dynamodb=False):
     """ :type dataset: dart.model.dataset.Dataset """
 
     def add_to(step_partials, step_num, func, *args):
@@ -74,7 +69,7 @@ def prepare_load_dataset_steps(dry_run, args_by_name, datastore, dataset, action
         stage_table_name = target_table_name + '_stage_for_action_' + action_id
         staging_not_needed = stage_table_not_needed(dataset, target_file_format, target_row_format, target_compression,
                                                     target_delimited_by, target_quoted_by, target_escaped_by, target_null_string)
-        first_table_name = target_table_name if staging_not_needed else stage_table_name
+        first_table_name = target_table_name if staging_not_needed and not target_is_dynamodb else stage_table_name
 
         drop_table_names = []
         step_funcs = []
@@ -92,10 +87,27 @@ def prepare_load_dataset_steps(dry_run, args_by_name, datastore, dataset, action
             i = add_to(step_funcs, i, python_fix_partition_folder_names, first_table_name.lower(), dataset.data.partitions, s3_step_path, action_id)
 
         # ------------------------------------------------------------------------------------------------------------
+        # special case to share functionality with the dynamodb_engine
+        # ------------------------------------------------------------------------------------------------------------
+        if target_is_dynamodb:
+            dyn_dataset = Dataset.from_dict(dataset.to_dict())
+            assert isinstance(dyn_dataset, Dataset)
+            dyn_dataset.data.data_format = DataFormat('DYNAMODB_TABLE', RowFormat.NONE, 0)
+            dyn_dataset.data.compression = Compression.NONE
+            dyn_dataset.data.columns = [Column(c.name, dynamodb_column_type(c)) for c in dataset.data.columns]
+            set_hive_vars = 'SET dynamodb.retry.duration = 0;\nSET dynamodb.throughput.write.percent = %s;'
+            set_hive_vars = set_hive_vars % args_by_name['write_capacity_utilization_percent']
+
+            i = add_to(step_funcs, i, hive_table_definition_step, stage_table_name, dataset, s3_step_path, local_step_path, action_id, False)
+            i = add_to(step_funcs, i, hive_table_definition_step, target_table_name, dyn_dataset, s3_step_path, local_step_path, action_id, True)
+            i = add_to(step_funcs, i, hive_msck_repair_table_step, stage_table_name, s3_step_path, action_id)
+            i = add_to(step_funcs, i, hive_copy_to_table, dataset, stage_table_name, dyn_dataset, target_table_name, s3_step_path, local_step_path, action_id, set_hive_vars)
+
+        # ------------------------------------------------------------------------------------------------------------
         # if no stage tables are needed, much complexity can be skipped
         # ------------------------------------------------------------------------------------------------------------
-        if staging_not_needed:
-            i = add_to(step_funcs, i, hive_table_definition_step, target_table_name, dataset, s3_step_path, local_step_path, action_id)
+        elif staging_not_needed:
+            i = add_to(step_funcs, i, hive_table_definition_step, target_table_name, dataset, s3_step_path, local_step_path, action_id, False)
             i = add_to(step_funcs, i, hive_msck_repair_table_step, target_table_name, s3_step_path, action_id)
 
         # ------------------------------------------------------------------------------------------------------------
@@ -119,15 +131,15 @@ def prepare_load_dataset_steps(dry_run, args_by_name, datastore, dataset, action
                 for c in stage_dataset.data.columns:
                     c.data_type = DataType.STRING
 
-            i = add_to(step_funcs, i, hive_table_definition_step, stage_table_name, stage_dataset, s3_step_path, local_step_path, action_id)
-            i = add_to(step_funcs, i, hive_table_definition_step, target_table_name, target_dataset, s3_step_path, local_step_path, action_id)
+            i = add_to(step_funcs, i, hive_table_definition_step, stage_table_name, stage_dataset, s3_step_path, local_step_path, action_id, False)
+            i = add_to(step_funcs, i, hive_table_definition_step, target_table_name, target_dataset, s3_step_path, local_step_path, action_id, False)
             i = add_to(step_funcs, i, hive_msck_repair_table_step, stage_table_name, s3_step_path, action_id)
 
             # --------------------------------------------------------------------------------------------------------
             # hive has issues creating parquet files
             # --------------------------------------------------------------------------------------------------------
             if target_file_format != FileFormat.PARQUET:
-                i = add_to(step_funcs, i, hive_copy_to_table, stage_dataset, stage_table_name, target_dataset, target_table_name, s3_step_path, local_step_path, action_id)
+                i = add_to(step_funcs, i, hive_copy_to_table, stage_dataset, stage_table_name, target_dataset, target_table_name, s3_step_path, local_step_path, action_id, None)
 
             # --------------------------------------------------------------------------------------------------------
             # impala is better for creating parquet files
@@ -137,7 +149,7 @@ def prepare_load_dataset_steps(dry_run, args_by_name, datastore, dataset, action
                 # no additional staging tables needed if the source dataset file format is RCFILE (impala friendly)
                 # ----------------------------------------------------------------------------------------------------
                 if dataset.data.data_format.file_format == FileFormat.RCFILE:
-                    i = add_to(step_funcs, i, hive_copy_to_table, stage_dataset, stage_table_name, target_dataset, target_table_name, s3_step_path, local_step_path, action_id)
+                    i = add_to(step_funcs, i, hive_copy_to_table, stage_dataset, stage_table_name, target_dataset, target_table_name, s3_step_path, local_step_path, action_id, None)
 
                 # ----------------------------------------------------------------------------------------------------
                 # impala cannot read all hive formats, so we will introduce another staging table
@@ -149,8 +161,8 @@ def prepare_load_dataset_steps(dry_run, args_by_name, datastore, dataset, action
                     rc_dataset.data.compression = Compression.NONE
                     drop_table_names.append(rc_table_name)
 
-                    i = add_to(step_funcs, i, hive_table_definition_step, rc_table_name, rc_dataset, s3_step_path, local_step_path, action_id)
-                    i = add_to(step_funcs, i, hive_copy_to_table, stage_dataset, stage_table_name, rc_dataset, rc_table_name, s3_step_path, local_step_path, action_id)
+                    i = add_to(step_funcs, i, hive_table_definition_step, rc_table_name, rc_dataset, s3_step_path, local_step_path, action_id, False)
+                    i = add_to(step_funcs, i, hive_copy_to_table, stage_dataset, stage_table_name, rc_dataset, rc_table_name, s3_step_path, local_step_path, action_id, None)
                     i = add_to(step_funcs, i, impala_copy_to_table, rc_dataset, rc_table_name, target_dataset, target_table_name, s3_step_path, local_step_path, action_id)
 
         # ------------------------------------------------------------------------------------------------------------
@@ -169,7 +181,8 @@ def prepare_load_dataset_steps(dry_run, args_by_name, datastore, dataset, action
         # ------------------------------------------------------------------------------------------------------------
         # inform impala about changes
         # ------------------------------------------------------------------------------------------------------------
-        i = add_to(step_funcs, i, impala_invalidate_metadata_step, s3_step_path, action_id)
+        if not target_is_dynamodb:
+            i = add_to(step_funcs, i, impala_invalidate_metadata_step, s3_step_path, action_id)
 
         total_steps = i - 1
         steps = []

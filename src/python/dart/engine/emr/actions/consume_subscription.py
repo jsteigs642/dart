@@ -1,5 +1,3 @@
-import itertools
-
 from dart.engine.emr.actions.load_dataset import prepare_load_dataset_steps
 from dart.engine.emr.exception.exception import ActionFailedButConsumeSuccessfulException
 from dart.engine.emr.step_runner import run_steps
@@ -18,17 +16,11 @@ def consume_subscription(emr_engine, datastore, action, consume_successful=False
         subscription = emr_engine.dart.get_subscription(action.data.args['subscription_id'])
         dataset = emr_engine.dart.get_dataset(subscription.data.dataset_id)
         dry_run = datastore.data.args['dry_run']
-
-        generator_seed = subscription_s3_path_and_file_size_generator(emr_engine.dart, action.id)
-        generator, generator2 = itertools.tee(generator_seed)
+        generator = subscription_s3_path_and_file_size_generator(emr_engine.dart, action.id)
         steps = prepare_load_dataset_steps(dry_run, action.data.args, datastore, dataset, action.id, generator)
-
         if dry_run:
             consume_successful = True
-            emr_engine.dart.patch_action(action, progress=1, extra_data={
-                'steps': steps,
-                'first_5_s3_paths_and_file_sizes': list(itertools.islice(generator2, 5)),
-            })
+            emr_engine.dart.patch_action(action, progress=1, extra_data={'steps': [s.to_dict() for s in steps]})
             return
 
         run_steps(emr_engine, datastore, action, steps)

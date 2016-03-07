@@ -13,6 +13,7 @@ IFS=
 CONFIG="$(DART_ROLE=tool dart_conf)"
 DOCKER_IMAGE_ENGINE_NO_OP=$(dart_conf_value "${CONFIG}" "$.engines.no_op_engine.docker_image")
 DOCKER_IMAGE_ENGINE_EMR=$(dart_conf_value "${CONFIG}" "$.engines.emr_engine.docker_image")
+DOCKER_IMAGE_ENGINE_DYNAMODB=$(dart_conf_value "${CONFIG}" "$.engines.dynamodb_engine.docker_image")
 DOCKER_IMAGE_ENGINE_REDSHIFT=$(dart_conf_value "${CONFIG}" "$.engines.redshift_engine.docker_image")
 IFS=${OLD_IFS}
 
@@ -20,6 +21,7 @@ $(aws ecr get-login)
 set -x
 docker push ${DOCKER_IMAGE_ENGINE_NO_OP}
 docker push ${DOCKER_IMAGE_ENGINE_EMR}
+docker push ${DOCKER_IMAGE_ENGINE_DYNAMODB}
 docker push ${DOCKER_IMAGE_ENGINE_REDSHIFT}
 set +x
 

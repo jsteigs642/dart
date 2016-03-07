@@ -13,7 +13,7 @@ def unload_to_s3(action, conn):
         ALLOWOVERWRITE
         NULL AS 'NULL'
         ESCAPE
-        DELIMITER '\t'
+        DELIMITER '{delimiter}'
         PARALLEL {parallel}
         GZIP;
         """.format(
@@ -25,6 +25,7 @@ def unload_to_s3(action, conn):
             '{HOUR}', now.strftime('%H')).replace(
             '{MINUTE}', now.strftime('%M')).replace(
             '{SECOND}', now.strftime('%S')),
+        delimiter=args['delimiter'] if args.get('delimiter') else '\t',
         parallel='ON' if args['parallel'] else 'OFF',
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,

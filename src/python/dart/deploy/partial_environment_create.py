@@ -12,6 +12,7 @@ import yaml
 from dart.config.config import configuration, get_secrets_config, dart_root_relative_path
 from dart.deploy.deployment import DeploymentTool
 from dart.deploy.put_stack import PutStack
+from dart.engine.dynamodb.add_engine import add_dynamodb_engine
 from dart.engine.emr.add_engine import add_emr_engine
 from dart.engine.emr.add_sub_graphs import add_emr_engine_sub_graphs
 from dart.engine.no_op.add_engine import add_no_op_engine
@@ -151,6 +152,7 @@ class PartialEnvironmentCreateTool(DeploymentTool):
         add_no_op_engine_sub_graphs(output_config)
         add_emr_engine(output_config)
         add_emr_engine_sub_graphs(output_config)
+        add_dynamodb_engine(output_config)
         add_redshift_engine(output_config)
 
         _logger.info('creating and waiting for remaining stacks')

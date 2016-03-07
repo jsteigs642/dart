@@ -47,5 +47,3 @@ class NoOpActionTypes(object):
             'required': ['subscription_id'],
         }
     )
-
-    all = [action_that_succeeds, action_that_fails, copy_hdfs_to_s3_action, load_dataset, consume_subscription]

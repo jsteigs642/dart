@@ -12,6 +12,5 @@ def terminate_datastore(emr_engine, datastore, action):
         return
 
     emr_engine.conn.terminate_jobflow(datastore.data.extra_data['cluster_id'])
-    datastore.data.state = DatastoreState.DONE
-    emr_engine.dart.save_datastore(datastore)
+    emr_engine.dart.patch_datastore(datastore, state=DatastoreState.DONE)
     emr_engine.dart.patch_action(action, progress=1)

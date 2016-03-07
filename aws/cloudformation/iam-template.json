@@ -113,13 +113,13 @@
                         }
                     },
                     {
-                        "PolicyName" : "dart-full-access-to-ecs-emr-reshift",
+                        "PolicyName" : "dart-full-access-to-ecs-emr-reshift-dynamodb",
                         "PolicyDocument": {
                             "Version" : "2012-10-17",
                             "Statement" : [
                                 {
                                     "Effect" : "Allow",
-                                    "Action" : [ "ecs:*", "elasticmapreduce:*", "redshift:*" ],
+                                    "Action" : [ "ecs:*", "elasticmapreduce:*", "redshift:*", "dynamodb:*" ],
                                     "Resource" : "*"
                                 }
                             ]

@@ -117,6 +117,29 @@ engines:
             dart_port: 80
             dart_api_version: 1
 
+    dynamodb_engine:
+        config: ...TBD...
+        docker_image: ...TBD...
+        path: dart.engine.dynamodb.dynamodb.DynamoDBEngine
+        options:
+            emr_ec2_keyname: my-previously-created-ec2-key-pair-name
+            emr_instance_profile: ...TBD...
+            emr_service_role: ...TBD...
+            emr_region: us-east-1
+            emr_cluster_availability_zone: us-east-1b
+            emr_core_node_limit: 30
+            emr_impala_docker_repo_base_url: ...TBD...
+            emr_impala_version: 2.4.0
+            emr_cluster_tags:
+                # these can be whatever you want (resource tracking, etc)
+                Name: dwh-dar-uds
+                Product: dwh
+                Function: dar-uds
+                Accounting: 999-999999
+            dart_host: !env dart-${DART_ENV}-internal.mycompany-internal.com
+            dart_port: 80
+            dart_api_version: 1
+
     redshift_engine:
         config: ...TBD...
         docker_image: ...TBD...
@@ -160,6 +183,7 @@ ecr:
         - elasticmq
         - engine-no_op
         - engine-emr
+        - engine-dynamodb
         - engine-redshift
         - engine-worker
         - flask

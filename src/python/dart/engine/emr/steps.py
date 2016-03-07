@@ -102,7 +102,7 @@ def python_copy_hdfs_to_s3(s3_step_path, src, dest, s3_temp_path, action_id, ste
     )
 
 
-def hive_table_definition_step(table_name, dataset, s3_step_path, local_step_path, action_id, step_num, steps_total):
+def hive_table_definition_step(table_name, dataset, s3_step_path, local_step_path, action_id, external, step_num, steps_total):
     column_definitions = ',\n  '.join(['%s %s' % (c.name, mapped_column_type(c)) for c in dataset.data.columns])
     partitions = ', '.join(['%s %s' % (c.name, mapped_column_type(c)) for c in (dataset.data.partitions or [])])
 
@@ -120,14 +120,16 @@ def hive_table_definition_step(table_name, dataset, s3_step_path, local_step_pat
                           'WITH SERDEPROPERTIES ("input.regex" = %s, "output.format.string" = %s)' % vs
 
         elif df.row_format.upper() == RowFormat.DELIMITED:
-            vs = (
-                json.dumps(df.delimited_by),
-                json.dumps(df.quoted_by),
-                json.dumps(df.escaped_by),
-                json.dumps(df.null_string)
-            )
-            data_format = "ROW FORMAT SERDE 'com.bizo.hive.serde.csv.RmnCsvSerde'\nWITH SERDEPROPERTIES (" +\
-                          '"separatorChar" = %s, "quoteChar" = %s, "escapeChar" = %s, "nullString" = %s)' % vs
+            sp = '"separatorChar" = %s' % json.dumps(df.delimited_by)
+            qt = '"quoteChar" = %s' % json.dumps(df.quoted_by) if df.quoted_by else ''
+            es = '"escapeChar" = %s' % json.dumps(df.escaped_by) if df.escaped_by else ''
+            ns = '"nullString" = %s' % json.dumps(df.null_string) if df.null_string else ''
+            props_list = [sp]
+            if qt: props_list.append(qt)
+            if es: props_list.append(es)
+            if ns: props_list.append(ns)
+            props = ', '.join(props_list)
+            data_format = "ROW FORMAT SERDE 'com.bizo.hive.serde.csv.RmnCsvSerde'\nWITH SERDEPROPERTIES (%s)" % props
 
         elif df.row_format.upper() == RowFormat.JSON:
             column_definitions = 'json STRING'
@@ -135,10 +137,23 @@ def hive_table_definition_step(table_name, dataset, s3_step_path, local_step_pat
 
         else:
             raise Exception('unsupported row format: %s' % json.dumps(df.to_dict()))
+
+    elif df.file_format.upper() == 'DYNAMODB_TABLE':
+        data_format = (
+            "STORED BY 'org.apache.hadoop.hive.dynamodb.DynamoDBStorageHandler'\n"
+            "TBLPROPERTIES (\n"
+            '  "dynamodb.table.name" = "{table_name}",\n'
+            '  "dynamodb.column.mapping" = "{mapping}"\n'
+            ")"
+        ).format(
+            table_name=table_name,
+            mapping=','.join(['%s:%s' % (c.name, c.name) for c in dataset.data.columns])
+        )
+
     else:
         raise Exception('unsupported file format: %s' % json.dumps(df.to_dict()))
 
-    contents = '\nCREATE TABLE IF NOT EXISTS {table_name} (\n' +\
+    contents = '\nCREATE {external} TABLE IF NOT EXISTS {table_name} (\n' +\
                '{column_definitions}\n' +\
                ')\n' +\
                '{partitions}\n' +\
@@ -148,11 +163,12 @@ def hive_table_definition_step(table_name, dataset, s3_step_path, local_step_pat
     hive_table_definition_path = os.path.join(local_step_path, 'hive', 'table_%s.hql' % table_name)
     with open(hive_table_definition_path, 'w') as f:
         contents = contents.format(
+            external='EXTERNAL' if external else '',
             table_name=table_name,
             column_definitions=column_definitions,
             partitions='PARTITIONED BY (%s)' % partitions if partitions else '',
             data_format=data_format,
-            skip_rows="TBLPROPERTIES ('skip.header.line.count'='%s')" % df.num_header_rows or '',
+            skip_rows="TBLPROPERTIES ('skip.header.line.count'='%s')" % df.num_header_rows if df.num_header_rows else ''
         )
         f.write(contents)
 
@@ -184,7 +200,7 @@ def python_fix_partition_folder_names(table_name, partitions, s3_step_path, acti
 
 
 def hive_copy_to_table(source_dataset, source_table_name, destination_dataset, destination_table_name, s3_step_path,
-                       local_step_path, action_id, step_num, steps_total):
+                       local_step_path, action_id, set_hive_vars, step_num, steps_total):
     hive_source_path = os.path.join(local_step_path, 'hive', 'copy_to_table.hql')
     hive_target_path = os.path.join(local_step_path, 'hive', 'copy_to_table_%s.hql' % destination_table_name)
     with open(hive_source_path, 'r') as s, open(hive_target_path, 'w') as t:
@@ -193,7 +209,8 @@ def hive_copy_to_table(source_dataset, source_table_name, destination_dataset, d
             destination_table_name=destination_table_name,
             partitions=get_partitions(source_dataset),
             columns=get_columns(source_dataset, destination_dataset),
-            compression=get_emr_compression(destination_dataset)
+            compression=get_emr_compression(destination_dataset),
+            set_hive_vars=set_hive_vars if set_hive_vars else ''
         )
         t.write(contents)
 

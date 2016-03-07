@@ -23,7 +23,7 @@ def mapped_column_definition(column=None):
     :rtype: str
     """
     type_function = column_type_map[column.data_type.upper()]
-    return '{name} {type}{not_null}'.format(
+    return '"{name}" {type}{not_null}'.format(
         name=column.name,
         type=type_function(column),
         not_null=' NOT NULL' if not column.is_nullable else '',

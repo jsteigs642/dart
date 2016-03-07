@@ -113,6 +113,8 @@ class FullEnvironmentCreateTool(PartialEnvironmentCreateTool):
         _logger.info('updating configuration with iam profiles/roles')
         output_config['engines']['emr_engine']['options']['instance_profile'] = uds_ec2_inpf
         output_config['engines']['emr_engine']['options']['service_role'] = uds_inpf_role
+        output_config['engines']['dynamodb_engine']['options']['emr_instance_profile'] = uds_ec2_inpf
+        output_config['engines']['dynamodb_engine']['options']['emr_service_role'] = uds_inpf_role
         self._set_cfn_boto_param_value(output_config, 'engine-taskrunner', 'IamInstanceProfile', ecs_container_inpf)
         self._set_cfn_boto_param_value(output_config, 'engine-worker', 'IamInstanceProfile', ecs_container_inpf)
         self._set_cfn_boto_param_value(output_config, 'subscription-worker', 'IamInstanceProfile', ecs_container_inpf)
@@ -174,6 +176,8 @@ class FullEnvironmentCreateTool(PartialEnvironmentCreateTool):
         eng_cfg['no_op_engine']['docker_image'] = self._docker_image('engine-no_op', output_config)
         eng_cfg['emr_engine']['docker_image'] = self._docker_image('engine-emr', output_config)
         eng_cfg['emr_engine']['options']['impala_docker_repo_base_url'] = self._ecr_base_url(output_config)
+        eng_cfg['dynamodb_engine']['docker_image'] = self._docker_image('engine-dynamodb', output_config)
+        eng_cfg['dynamodb_engine']['options']['emr_impala_docker_repo_base_url'] = self._ecr_base_url(output_config)
         eng_cfg['redshift_engine']['docker_image'] = self._docker_image('engine-redshift', output_config)
         ew_image = self._docker_image('engine-worker', output_config)
         sw_image = self._docker_image('subscription-worker', output_config)
@@ -203,6 +207,7 @@ class FullEnvironmentCreateTool(PartialEnvironmentCreateTool):
         self._set_cfn_boto_param_value(output_config, 'web', 'DartConfig', self.output_config_s3_path)
         eng_cfg['no_op_engine']['config'] = self.output_config_s3_path
         eng_cfg['emr_engine']['config'] = self.output_config_s3_path
+        eng_cfg['dynamodb_engine']['config'] = self.output_config_s3_path
         eng_cfg['redshift_engine']['config'] = self.output_config_s3_path
 
         _logger.info('waiting for logs stack')

@@ -27,9 +27,8 @@ def start_datastore(emr_engine, datastore, action):
         Filter('state', Operator.EQ, ActionState.HAS_NEVER_RUN),
         Filter('action_type_name', Operator.EQ, EmrActionTypes.load_dataset.name),
     ])
-    instance_groups_args = prepare_instance_groups(emr_engine, datastore, actions, emr_engine.core_node_limit)
-    bootstrap_actions_args = prepare_bootstrap_actions(datastore, emr_engine.impala_docker_repo_base_url,
-                                                       emr_engine.impala_version)
+    instance_groups_args = prepare_instance_groups(emr_engine, datastore, actions, emr_engine.core_node_limit, datastore.data.args['data_to_freespace_ratio'])
+    bootstrap_actions_args = prepare_bootstrap_actions(datastore, emr_engine.impala_docker_repo_base_url, emr_engine.impala_version)
 
     extra_data = {
         'instance_groups_args': instance_groups_args,
@@ -65,7 +64,7 @@ def start_datastore(emr_engine, datastore, action):
     )
 
 
-def create_cluster(bootstrap_actions_args, cluster_name, datastore, emr_engine, instance_groups_args):
+def create_cluster(bootstrap_actions_args, cluster_name, datastore, emr_engine, instance_groups_args, steps=None, auto_terminate=False):
     keyname = emr_engine.ec2_keyname
     instance_profile = emr_engine.instance_profile
     az = emr_engine.cluster_availability_zone
@@ -82,6 +81,8 @@ def create_cluster(bootstrap_actions_args, cluster_name, datastore, emr_engine, 
           ' --tags {tags}'\
           ' --bootstrap-actions {bootstrap_actions}'\
           ' --applications {applications}'\
+          ' {steps}'\
+          ' {auto_terminate}'\
           ''
     cmd = cmd.format(
         release_label=datastore.data.args['release_label'],
@@ -100,12 +101,22 @@ def create_cluster(bootstrap_actions_args, cluster_name, datastore, emr_engine, 
                 args='' if len(a[2:]) <= 0 else '"%s"' % (','.join(a[2:]))) for a in bootstrap_actions_args
         ]),
         applications='Name=Hadoop Name=Hive Name=Spark',
+        steps='--steps ' + ' '.join([
+            'Name="{name}",Args=[{args}],Jar="{jar}",ActionOnFailure="{aof}",Type="CUSTOM_JAR"'.format(
+                name='step-%s' % step_num,
+                args='"%s"' % (','.join(s.args())) if s.args() else '',
+                jar=s.jar(),
+                aof=s.action_on_failure
+            )
+            for step_num, s in enumerate(steps)
+        ]) if steps else '',
+        auto_terminate='--auto-terminate' if auto_terminate else ''
     )
     result = call(cmd)
     return json.loads(result)['ClusterId']
 
 
-def prepare_instance_groups(emr_engine, datastore, actions, core_node_limit):
+def prepare_instance_groups(emr_engine, datastore, actions, core_node_limit, data_to_freespace_ratio):
     instance_type = datastore.data.args.get('instance_type', 'm3.2xlarge')
     legacy_core_instance_count = datastore.data.args.get('core_instance_count')
     legacy_core_instance_count = legacy_core_instance_count + 1 if legacy_core_instance_count else None
@@ -117,15 +128,15 @@ def prepare_instance_groups(emr_engine, datastore, actions, core_node_limit):
         ]
 
     s3_path_and_file_size_generators_by_action_name = {
-        EmrActionTypes.load_dataset.name: load_dataset_s3_path_and_file_size_generator,
-        EmrActionTypes.consume_subscription.name: subscription_s3_path_and_file_size_generator,
+        'load_dataset': load_dataset_s3_path_and_file_size_generator,
+        'consume_subscription': subscription_s3_path_and_file_size_generator,
     }
     dataset_size = 0L
     for action in actions:
         generator = s3_path_and_file_size_generators_by_action_name[action.data.action_type_name]
         dataset_size += sum(file_size for s3_path, file_size in generator(emr_engine, action))
 
-    data_to_freespace_ratio = float(datastore.data.args['data_to_freespace_ratio'])
+    data_to_freespace_ratio = float(data_to_freespace_ratio)
     num_cores = dataset_size / float((instance_disk_space_map[instance_type] * data_to_freespace_ratio))
     num_cores = int(math.ceil(num_cores))
     num_cores = max(1, num_cores)

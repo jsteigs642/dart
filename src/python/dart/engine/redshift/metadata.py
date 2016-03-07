@@ -114,10 +114,14 @@ class RedshiftActionTypes(object):
         params_json_schema={
             'type': 'object',
             'properties': {
-                'source_sql_statement': {'type': 'string', 'description': 'the SQL SELECT statement to be executed'},
-                'destination_s3_path': {
+                'delimiter': {'type': ['string', 'null'], 'default': '\t', 'description': 'field delimiter'},
+                'source_sql_statement': {
                     'type': 'string',
                     "x-schema-form": {"type": "textarea"},
+                    'description': 'the SQL SELECT statement to be executed'
+                },
+                'destination_s3_path': {
+                    'type': 'string',
                     'pattern': '^s3://.+$',
                     'description': 'The destination s3 path, e.g. s3://bucket/prefix.  The following values (with braces)'
                                    ' will be substituted with the appropriate zero-padded values at runtime:'
