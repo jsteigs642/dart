@@ -73,7 +73,7 @@ WORKFLOW_INSTANCE_SQL = """
           ) wfis
          ON TRUE
   LEFT JOIN LATERAL (
-             SELECT 100 * SUM(CASE WHEN e.data ->> 'state' = 'COMPLETED' THEN 1 ELSE 0 END) / COUNT(*) AS progress
+             SELECT 100 * SUM(CASE WHEN e.data ->> 'state' IN ('COMPLETED', 'FAILED') THEN 1 ELSE 0 END) / COUNT(*) AS progress
                FROM action e
               WHERE e.data ->> 'workflow_instance_id' = wfis.id
                 AND wfis.state = 'RUNNING'

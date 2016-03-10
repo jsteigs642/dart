@@ -106,23 +106,23 @@ class TriggerListener(object):
         wf = self._workflow_service.get_workflow(wfid) if wfid else None
         wfi = self._workflow_service.get_workflow_instance(wfiid) if wfiid else None
         callbacks = []
-        no_op = None
         try_next_action = True
         try:
             if state == ActionState.FAILED:
                 callbacks.append(lambda: self._emailer.send_action_failed_email(action, datastore))
-                if wfi:
-                    self._workflow_service.update_workflow_instance_state(wfi, WorkflowInstanceState.FAILED)
-                    f1 = Filter('workflow_instance_id', Operator.EQ, wfiid)
-                    f2 = Filter('state', Operator.EQ, ActionState.HAS_NEVER_RUN)
-                    for a in self._action_service.query_actions_all(filters=[f1, f2]):
-                        error_msg = 'A prior action (id=%s) in this workflow instance failed' % action.id
-                        self._action_service.update_action_state(a, ActionState.SKIPPED, error_msg)
-                    callbacks.append(lambda: self._emailer.send_workflow_failed_email(wf, wfi))
+
                 if action.data.on_failure == OnFailure.DEACTIVATE:
                     self._datastore_service.update_datastore_state(datastore, DatastoreState.INACTIVE)
-                    self._workflow_service.update_workflow_state(wf, WorkflowState.INACTIVE) if wf else no_op
                     try_next_action = False
+                    if wf and wfi:
+                        self._workflow_service.update_workflow_state(wf, WorkflowState.INACTIVE)
+                        self._workflow_service.update_workflow_instance_state(wfi, WorkflowInstanceState.FAILED)
+                        f1 = Filter('workflow_instance_id', Operator.EQ, wfiid)
+                        f2 = Filter('state', Operator.EQ, ActionState.HAS_NEVER_RUN)
+                        for a in self._action_service.query_actions_all(filters=[f1, f2]):
+                            error_msg = 'A prior action (id=%s) in this workflow instance failed' % action.id
+                            self._action_service.update_action_state(a, ActionState.SKIPPED, error_msg)
+                        callbacks.append(lambda: self._emailer.send_workflow_failed_email(wf, wfi))
 
             elif state == ActionState.COMPLETED:
                 if action.data.on_success_email:

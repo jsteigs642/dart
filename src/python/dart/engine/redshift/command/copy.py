@@ -26,15 +26,6 @@ core_counts_by_instance_type = {
 _logger = logging.getLogger(__name__)
 
 
-core_counts_by_instance_type = {
-    'ds1.xlarge': 2,
-    'ds1.8xlarge': 16,
-    'ds2.xlarge': 4,
-    'ds2.8xlarge': 36,
-    'dc1.large': 2,
-    'dc1.8xlarge': 32,
-}
-
 def copy_from_s3(dart, datastore, action, dataset, conn, batch_size, s3_path_and_updated_generator):
     """
     :type dart: dart.client.python.dart_client.Dart

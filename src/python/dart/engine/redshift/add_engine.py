@@ -102,7 +102,7 @@ def add_redshift_engine(config):
                     'default': None,
                     'minLength': 1,
                     'maxLength': 63,
-                    'pattern': '^[a-z]+$',
+                    'pattern': '^[a-zA-Z0-9-]*$',
                     'description': 'this overrides the auto-generated dart cluster_identifier'
                 },
                 'preferred_maintenance_window': {

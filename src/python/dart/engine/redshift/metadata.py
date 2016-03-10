@@ -127,7 +127,7 @@ class RedshiftActionTypes(object):
                                    ' will be substituted with the appropriate zero-padded values at runtime:'
                                    '{YEAR}, {MONTH}, {DAY}, {HOUR}, [MINUTE}, {SECOND}'
                 },
-                'parallel': {'type': 'boolean', 'default': False, 'description': 'if false, unload sequentially as one file'},
+                'parallel': {'type': 'boolean', 'default': True, 'description': 'if false, unload sequentially as one file'},
             },
             'additionalProperties': False,
             'required': ['source_sql_statement', 'destination_s3_path'],
