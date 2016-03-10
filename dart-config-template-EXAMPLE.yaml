@@ -165,6 +165,14 @@ engines:
             dart_host: !env dart-${DART_ENV}-internal.mycompany-internal.com
             dart_port: 80
             dart_api_version: 1
+    s3_engine:
+        config: ...TBD...
+        docker_image: ...TBD...
+        path: dart.engine.s3.s3.S3Engine
+        options:
+            dart_host: !env dart-${DART_ENV}-internal.mycompany-internal.com
+            dart_port: 80
+            dart_api_version: 1
 
 
 local_setup:

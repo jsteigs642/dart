@@ -18,6 +18,7 @@ from dart.engine.emr.add_sub_graphs import add_emr_engine_sub_graphs
 from dart.engine.no_op.add_engine import add_no_op_engine
 from dart.engine.no_op.add_sub_graphs import add_no_op_engine_sub_graphs
 from dart.engine.redshift.add_engine import add_redshift_engine
+from dart.engine.s3.add_engine import add_s3_engine
 from dart.service.secrets import Secrets
 
 from dart.util.s3 import get_bucket_name, get_key_name
@@ -154,6 +155,7 @@ class PartialEnvironmentCreateTool(DeploymentTool):
         add_emr_engine_sub_graphs(output_config)
         add_dynamodb_engine(output_config)
         add_redshift_engine(output_config)
+        add_s3_engine(output_config)
 
         _logger.info('creating and waiting for remaining stacks')
         engine_worker_stack_name = self._create_stack('engine-worker', output_config)
