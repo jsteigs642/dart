@@ -124,20 +124,29 @@ class TriggerListener(object):
                             self._action_service.update_action_state(a, ActionState.SKIPPED, error_msg)
                         callbacks.append(lambda: self._emailer.send_workflow_failed_email(wf, wfi))
 
+                else:
+                    if wfi and action.data.last_in_workflow:
+                        self._handle_complete_workflow(callbacks, wf, wfi, wfid)
+
             elif state == ActionState.COMPLETED:
                 if action.data.on_success_email:
                     callbacks.append(lambda: self._emailer.send_action_completed_email(action, datastore))
                 if wfi and action.data.last_in_workflow:
-                    self._workflow_service.update_workflow_instance_state(wfi, WorkflowInstanceState.COMPLETED)
-                    self._trigger_proxy.trigger_workflow_completion(wfid)
-                    self._trigger_subscription_evaluations(wfi.data.trigger_id)
-                    if wf.data.on_success_email:
-                        callbacks.append(lambda: self._emailer.send_workflow_completed_email(wf, wfi))
+                    self._handle_complete_workflow(callbacks, wf, wfi, wfid)
+
         finally:
             for f in callbacks:
                 f()
+
         if try_next_action:
             self._trigger_proxy.try_next_action(datastore.id)
+
+    def _handle_complete_workflow(self, callbacks, wf, wfi, wfid):
+        self._workflow_service.update_workflow_instance_state(wfi, WorkflowInstanceState.COMPLETED)
+        self._trigger_proxy.trigger_workflow_completion(wfid)
+        self._trigger_subscription_evaluations(wfi.data.trigger_id)
+        if wf.data.on_success_email:
+            callbacks.append(lambda: self._emailer.send_workflow_completed_email(wf, wfi))
 
     def _trigger_subscription_evaluations(self, trigger_id):
         if not trigger_id:
