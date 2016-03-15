@@ -13,6 +13,7 @@ from dart.model.workflow import Workflow, WorkflowData, WorkflowState
 from dart.trigger.event import event_trigger
 from dart.trigger.scheduled import scheduled_trigger
 from dart.trigger.subscription import subscription_batch_trigger
+from dart.trigger.super import super_trigger
 from dart.trigger.workflow import workflow_completion_trigger
 
 
@@ -207,6 +208,26 @@ def _get_static_subgraphs_by_related_type(engine, graph_entity_service):
         SubGraph(
             name='scheduled trigger',
             description='create a new scheduled trigger entity',
+            related_type=EntityType.workflow,
+            related_is_a=Relationship.CHILD,
+            graph=graph_entity_service.to_graph(None, entity_models),
+            entity_map=graph_entity_service.to_entity_map(entity_models),
+            icon='▼',
+        ),
+    ])
+
+    entity_models = graph_entity_service.to_entity_models_with_randomized_ids([
+        Trigger(id=Ref.trigger(1), data=TriggerData(
+            name='%s_trigger' % super_trigger.name,
+            trigger_type_name=super_trigger.name,
+            state=TriggerState.INACTIVE,
+            workflow_ids=[Ref.child()],
+        ))
+    ])
+    sub_graph_map[EntityType.workflow].extend([
+        SubGraph(
+            name='super trigger',
+            description='create a new super trigger entity',
             related_type=EntityType.workflow,
             related_is_a=Relationship.CHILD,
             graph=graph_entity_service.to_graph(None, entity_models),
