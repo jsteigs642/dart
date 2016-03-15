@@ -5,7 +5,19 @@ from dart.model.dataset import FileFormat, RowFormat, Compression
 class EmrActionTypes(object):
     start_datastore = ActionType(
         name='start_datastore',
-        description='Start this datastore for the first time'
+        description='Start this datastore for the first time',
+        params_json_schema={
+            'type': 'object',
+            'properties': {
+                'bootstrap_script': {
+                    'type': ['string', 'null'],
+                    'description': 'The contents of this script will be executed as a bootstrap step',
+                    "x-schema-form": {"type": "textarea"}
+                },
+            },
+            'additionalProperties': False,
+            'required': [],
+        }
     )
     terminate_datastore = ActionType(
         name='terminate_datastore',

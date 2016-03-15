@@ -28,7 +28,7 @@ def start_datastore(emr_engine, datastore, action):
         Filter('action_type_name', Operator.EQ, EmrActionTypes.load_dataset.name),
     ])
     instance_groups_args = prepare_instance_groups(emr_engine, datastore, actions, emr_engine.core_node_limit, datastore.data.args['data_to_freespace_ratio'])
-    bootstrap_actions_args = prepare_bootstrap_actions(datastore, emr_engine.impala_docker_repo_base_url, emr_engine.impala_version)
+    bootstrap_actions_args = prepare_bootstrap_actions(datastore, emr_engine.impala_docker_repo_base_url, emr_engine.impala_version, False, action)
 
     extra_data = {
         'instance_groups_args': instance_groups_args,
@@ -149,19 +149,26 @@ def prepare_instance_groups(emr_engine, datastore, actions, core_node_limit, dat
     ]
 
 
-def prepare_bootstrap_actions(datastore, impala_docker_repo_base_url, impala_version, dry_run=False):
+def prepare_bootstrap_actions(datastore, impala_docker_repo_base_url, impala_version, dry_run=False, action=None):
     current_path, current_file = ntpath.split(os.path.abspath(__file__))
     s3_ba_path = '%s/%s/bootstrap_actions' % (datastore.data.s3_artifacts_path, datastore.data.engine_name)
     local_ba_path = '%s/../bootstrap_actions/' % current_path
-    if not dry_run:
-        s3_copy_recursive(local_ba_path, s3_ba_path)
 
     wrapper_script_path = s3_ba_path + '/shell/install_impala_wrapper.sh'
     install_impala_path = s3_ba_path + '/ruby/install_impala.rb'
     copy_resources_path = s3_ba_path + '/shell/copy_resources.sh'
     csv_serde_path = s3_ba_path + '/misc/csv-serde-1.1.2-0.11.0-all.jar'
-    return [
-        ('dart: install impala (background)', wrapper_script_path, install_impala_path, impala_docker_repo_base_url,
-         impala_version),
-        ('dart: copy resources', copy_resources_path, csv_serde_path),
+    results = [
+        ('dart: install impala (background)', wrapper_script_path, install_impala_path, impala_docker_repo_base_url, impala_version),
+        ('dart: copy resources', copy_resources_path, csv_serde_path)
     ]
+    if action and action.data.args.get('bootstrap_script'):
+        script_path = os.path.join(local_ba_path, 'misc', 'bootstrap_script_%s.txt' % action.id)
+        with open(script_path, 'w') as f:
+            f.write(action.data.args['bootstrap_script'])
+        results.append(('dart: custom bootstrap_script', s3_ba_path + '/misc/bootstrap_script_%s.txt' % action.id))
+
+    if not dry_run:
+        s3_copy_recursive(local_ba_path, s3_ba_path)
+
+    return results
