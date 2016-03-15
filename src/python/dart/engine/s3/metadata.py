@@ -7,7 +7,7 @@ _logger = logging.getLogger(__name__)
 
 class S3ActionTypes(object):
     copy = ActionType(name='copy',
-                      description='Accomplishes s3 source to s3 destination copy',
+                      description='Accomplishes s3 source to s3 destination copy, giving the destination bucket owner full control',
                       params_json_schema={
                           'type': 'object',
                           'properties': {

@@ -56,7 +56,7 @@ def add_s3_engine(config):
     e1 = dart.save_engine(engine=Engine(
             id=engine_id, data=EngineData(
                     name='s3_engine',
-                    description='For S3 FileCopy',
+                    description='For S3 operations',
                     options_json_schema={},
                     supported_action_types=[
                         S3ActionTypes.copy

@@ -12,7 +12,8 @@ _logger = logging.getLogger(__name__)
 
 
 class S3Engine(object):
-    def __init__(self, dart_host, dart_port, dart_api_version):
+    def __init__(self, region, dart_host, dart_port, dart_api_version):
+        self.region = region
         self.dart = Dart(dart_host, dart_port, dart_api_version)
         self._action_handlers = {
             S3ActionTypes.copy.name: s3_copy

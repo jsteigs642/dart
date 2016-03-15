@@ -35,8 +35,12 @@ def perform_s3_copy(s3_client, from_path, to_path):
 
 def copy_s3_object(s3_client, from_bucket, from_key_path, to_bucket, to_key_path):
     try:
-        s3_client.copy_object(Bucket=to_bucket, Key=to_key_path, CopySource={
-            'Bucket': from_bucket, 'Key': from_key_path})
+        s3_client.copy_object(
+            ACL='bucket-owner-full-control',
+            Bucket=to_bucket,
+            Key=to_key_path,
+            CopySource={'Bucket': from_bucket, 'Key': from_key_path},
+        )
     except Exception as e:
         raise e
 
