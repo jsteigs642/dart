@@ -10,7 +10,7 @@ angular
                 return Utils.wrap($resource('api/1/dataset/:dataset_id/subscription')
                     .save({dataset_id: e.data.dataset_id}, Utils.stripSingleArrayElementNulls(e)).$promise, true)
             },
-            updateEntity: function(e) { return Utils.wrap(api().update({id: e.id }, e).$promise, true) }
+            updateEntity: function(e) { return Utils.wrap(api().update({id: e.id }, Utils.stripSingleArrayElementNulls(e)).$promise, true) }
         };
     }])
 ;

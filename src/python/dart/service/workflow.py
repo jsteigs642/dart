@@ -163,6 +163,15 @@ class WorkflowService(object):
         return self._action_service.update_action_state(action, ActionState.FINISHING, action.data.error_message)
 
     @staticmethod
+    def patch_workflow(source_workflow, workflow):
+        workflow = patch_difference(WorkflowDao, source_workflow, workflow)
+        return workflow
+
+    @staticmethod
+    def default_and_validate_workflow(workflow):
+        return default_and_validate(workflow, workflow_schema())
+
+    @staticmethod
     def update_workflow_state(workflow, state):
         source_workflow = workflow.copy()
         workflow.data.state = state

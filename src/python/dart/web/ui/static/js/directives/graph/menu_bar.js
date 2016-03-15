@@ -199,6 +199,7 @@ angular
                         'workflow_instance': function(entity_id) { return WorkflowInstanceService.getEntity(entity_id) }
                     };
                     var updateEntityMap = {
+                        'action': function(entity) { return ActionService.updateEntity(entity) },
                         'dataset': function(entity) { return DatasetService.updateEntity(entity) },
                         'datastore': function(entity) { return DatastoreService.updateEntity(entity) },
                         'event': function(entity) { return EventService.updateEntity(entity) },

@@ -46,14 +46,7 @@ def find_datastores():
 @jsonapi
 def put_datastore(datastore):
     """ :type datastore: dart.model.datastore.Datastore """
-    updated_datastore = Datastore.from_dict(request.get_json())
-    if datastore.data.state == DatastoreState.TEMPLATE and updated_datastore.data.state != DatastoreState.TEMPLATE:
-        return {'results': 'ERROR', 'error_message': 'TEMPLATE state cannot be changed'}, 400, None
-    if updated_datastore.data.state not in [DatastoreState.ACTIVE, DatastoreState.INACTIVE, DatastoreState.DONE]:
-        return {'results': 'ERROR', 'error_message': 'state must be ACTIVE, INACTIVE, or DONE'}, 400, None
-
-    datastore = datastore_service().update_datastore_extra_data(datastore, updated_datastore.data.extra_data)
-    return {'results': datastore_service().update_datastore_state(datastore, updated_datastore.data.state).to_dict()}
+    return update_datastore(datastore, Datastore.from_dict(request.get_json()))
 
 
 @api_datastore_bp.route('/datastore/<datastore>', methods=['PATCH'])
@@ -62,19 +55,26 @@ def put_datastore(datastore):
 def patch_datastore(datastore):
     """ :type datastore: dart.model.datastore.Datastore """
     p = JsonPatch(request.get_json())
-    sanitized_datastore = datastore.copy()
-    patched_datastore = Datastore.from_dict(p.apply(datastore.to_dict()))
+    return update_datastore(datastore, Datastore.from_dict(p.apply(datastore.to_dict())))
+
+
+def update_datastore(datastore, updated_datastore):
+    if datastore.data.state == DatastoreState.TEMPLATE and updated_datastore.data.state != DatastoreState.TEMPLATE:
+        return {'results': 'ERROR', 'error_message': 'TEMPLATE state cannot be changed'}, 400, None
+    if updated_datastore.data.state not in [DatastoreState.ACTIVE, DatastoreState.INACTIVE, DatastoreState.DONE]:
+        return {'results': 'ERROR', 'error_message': 'state must be ACTIVE, INACTIVE, or DONE'}, 400, None
 
     # only allow updating fields that are editable
-    sanitized_datastore.data.name = patched_datastore.data.name
-    sanitized_datastore.data.host = patched_datastore.data.host
-    sanitized_datastore.data.port = patched_datastore.data.port
-    sanitized_datastore.data.connection_url = patched_datastore.data.connection_url
-    sanitized_datastore.data.state = patched_datastore.data.state
-    sanitized_datastore.data.concurrency = patched_datastore.data.concurrency
-    sanitized_datastore.data.args = patched_datastore.data.args
-    sanitized_datastore.data.extra_data = patched_datastore.data.extra_data
-    sanitized_datastore.data.tags = patched_datastore.data.tags
+    sanitized_datastore = datastore.copy()
+    sanitized_datastore.data.name = updated_datastore.data.name
+    sanitized_datastore.data.host = updated_datastore.data.host
+    sanitized_datastore.data.port = updated_datastore.data.port
+    sanitized_datastore.data.connection_url = updated_datastore.data.connection_url
+    sanitized_datastore.data.state = updated_datastore.data.state
+    sanitized_datastore.data.concurrency = updated_datastore.data.concurrency
+    sanitized_datastore.data.args = updated_datastore.data.args
+    sanitized_datastore.data.extra_data = updated_datastore.data.extra_data
+    sanitized_datastore.data.tags = updated_datastore.data.tags
 
     # revalidate
     sanitized_datastore = datastore_service().default_and_validate_datastore(sanitized_datastore)

@@ -2,6 +2,7 @@ import json
 from flask import Blueprint, request, current_app
 
 from flask.ext.jsontools import jsonapi
+from jsonpatch import JsonPatch
 
 from dart.model.subscription import Subscription, SubscriptionState, SubscriptionElementState
 from dart.service.filter import FilterService
@@ -110,11 +111,35 @@ def subscription_elements(action_id, state, subscription_id, gte_processed=None,
 @fetch_model
 @jsonapi
 def put_subscription(subscription):
-    s = Subscription.from_dict(request.get_json())
-    state = SubscriptionState.INACTIVE if s.data.state == SubscriptionState.INACTIVE else subscription.data.state
-    subscription = subscription_service().update_subscription_name(subscription, s.data.name)
-    subscription = subscription_service().update_subscription_state(subscription, state)
-    return {'results': subscription.to_dict()}
+    """ :type subscription: dart.model.subscription.Subscription """
+    return update_subscription(subscription, Subscription.from_dict(request.get_json()))
+
+
+@api_subscription_bp.route('/subscription/<subscription>', methods=['PATCH'])
+@fetch_model
+@jsonapi
+def patch_subscription(subscription):
+    """ :type subscription: dart.model.subscription.Subscription """
+    p = JsonPatch(request.get_json())
+    return update_subscription(subscription, Subscription.from_dict(p.apply(subscription.to_dict())))
+
+
+def update_subscription(subscription, updated_subscription):
+    if subscription.data.state not in [SubscriptionState.ACTIVE, SubscriptionState.INACTIVE]:
+        return {'results': 'ERROR', 'error_message': 'state must be ACTIVE or INACTIVE'}, 400, None
+
+    # only allow updating fields that are editable
+    sanitized_subscription = subscription.copy()
+    sanitized_subscription.data.name = updated_subscription.data.name
+    sanitized_subscription.data.state = updated_subscription.data.state
+    sanitized_subscription.data.on_failure_email = updated_subscription.data.on_failure_email
+    sanitized_subscription.data.on_success_email = updated_subscription.data.on_success_email
+    sanitized_subscription.data.tags = updated_subscription.data.tags
+
+    # revalidate
+    sanitized_subscription = subscription_service().default_and_validate_subscription(sanitized_subscription)
+
+    return {'results': subscription_service().patch_subscription(subscription, sanitized_subscription).to_dict()}
 
 
 @api_subscription_bp.route('/subscription/<subscription>', methods=['DELETE'])

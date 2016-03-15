@@ -66,14 +66,13 @@ class EventService(object):
         return query
 
     @staticmethod
-    def update_event(event, name, description, state):
-        """ :type event: dart.model.event.Event """
-        source_event = event.copy()
-        event = default_and_validate(event, event_schema())
-        event.data.name = name
-        event.data.description = description
-        event.data.state = state
-        return patch_difference(EventDao, source_event, event)
+    def patch_event(source_event, event):
+        event = patch_difference(EventDao, source_event, event)
+        return event
+
+    @staticmethod
+    def default_and_validate_event(event):
+        return default_and_validate(event, event_schema())
 
     @staticmethod
     @retry_stale_data

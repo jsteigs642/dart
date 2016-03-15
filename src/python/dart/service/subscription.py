@@ -118,12 +118,13 @@ class SubscriptionService(object):
         return query
 
     @staticmethod
-    def update_subscription_name(subscription, name):
-        """ :type subscription: dart.model.subscription.Subscription """
-        source_subscription = subscription.copy()
-        subscription = default_and_validate(subscription, subscription_schema())
-        subscription.data.name = name
-        return patch_difference(SubscriptionDao, source_subscription, subscription)
+    def patch_subscription(source_subscription, subscription):
+        subscription = patch_difference(SubscriptionDao, source_subscription, subscription)
+        return subscription
+
+    @staticmethod
+    def default_and_validate_subscription(subscription):
+        return default_and_validate(subscription, subscription_schema())
 
     @staticmethod
     def update_subscription_state(subscription, state):

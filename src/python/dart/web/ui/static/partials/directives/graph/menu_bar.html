@@ -30,10 +30,7 @@
         </button>
         <md-menu-content>
             <md-menu-item>
-                <md-button ng-disabled="!selectedNode
-                                            ||  selectedNode.entity_type === 'workflow_instance'
-                                            || (selectedNode.entity_type === 'action' && !selectedNode.entity_id.startsWith('UNSAVED'))"
-
+                <md-button ng-disabled="!selectedNode || selectedNode.entity_type === 'workflow_instance'"
                            ng-click="showEntityModal($event, 'edit')">
                     <md-icon>mode_edit</md-icon> update selected
                 </md-button>

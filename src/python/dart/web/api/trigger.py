@@ -1,6 +1,7 @@
 import json
 from flask import Blueprint, request, current_app
 from flask.ext.jsontools import jsonapi
+from jsonpatch import JsonPatch
 from dart.model.trigger import Trigger
 from dart.service.filter import FilterService
 from dart.service.trigger import TriggerService
@@ -60,9 +61,32 @@ def get_trigger_types():
 @jsonapi
 def put_trigger(trigger):
     """ :type trigger: dart.model.trigger.Trigger """
-    updated_trigger = Trigger.from_dict(request.get_json())
-    trigger = trigger_service().update_trigger_state(trigger, updated_trigger.data.state)
-    return {'results': trigger.to_dict()}
+    return update_trigger(trigger, Trigger.from_dict(request.get_json()))
+
+
+@api_trigger_bp.route('/trigger/<trigger>', methods=['PATCH'])
+@fetch_model
+@jsonapi
+def patch_trigger(trigger):
+    """ :type trigger: dart.model.trigger.Trigger """
+    p = JsonPatch(request.get_json())
+    return update_trigger(trigger, Trigger.from_dict(p.apply(trigger.to_dict())))
+
+
+def update_trigger(trigger, updated_trigger):
+    # only allow updating fields that are editable
+    sanitized_trigger = trigger.copy()
+    sanitized_trigger.data.name = updated_trigger.data.name
+    sanitized_trigger.data.workflow_ids = updated_trigger.data.workflow_ids
+    sanitized_trigger.data.args = updated_trigger.data.args
+    sanitized_trigger.data.state = updated_trigger.data.state
+    sanitized_trigger.data.tags = updated_trigger.data.tags
+    sanitized_trigger.data.extra_data = updated_trigger.data.extra_data
+
+    # revalidate
+    sanitized_trigger = trigger_service().default_and_validate_trigger(sanitized_trigger)
+
+    return {'results': trigger_service().patch_trigger(trigger, sanitized_trigger).to_dict()}
 
 
 @api_trigger_bp.route('/trigger/<trigger>', methods=['DELETE'])

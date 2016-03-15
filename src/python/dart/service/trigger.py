@@ -145,16 +145,19 @@ class TriggerService(object):
             query = self._filter_service.apply_filter(f, query, TriggerDao, self._trigger_schemas)
         return query
 
-    def update_trigger_state(self, trigger, state):
+    def patch_trigger(self, source_trigger, trigger):
         trigger_type_name = trigger.data.trigger_type_name
         if trigger_type_name == self._manual_trigger_processor.trigger_type().name:
             raise DartValidationException('manual triggers cannot be saved')
-        trigger_processor = self._trigger_processors.get(trigger_type_name)
 
-        source_trigger = trigger.copy()
-        trigger.data.state = state
+        trigger_processor = self._trigger_processors.get(trigger_type_name)
         trigger = patch_difference(TriggerDao, source_trigger, trigger)
         return trigger_processor.update_trigger(source_trigger, trigger)
+
+    def default_and_validate_trigger(self, trigger):
+        trigger_type_name = trigger.data.trigger_type_name
+        trigger_processor = self._trigger_processors.get(trigger_type_name)
+        return default_and_validate(trigger, trigger_schema(trigger_processor.trigger_type().params_json_schema))
 
     @staticmethod
     def update_trigger_workflow_ids(trigger, workflow_ids):

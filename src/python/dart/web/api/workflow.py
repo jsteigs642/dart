@@ -1,6 +1,7 @@
 import json
 from flask import Blueprint, request, current_app
 from flask.ext.jsontools import jsonapi
+from jsonpatch import JsonPatch
 from dart.model.datastore import DatastoreState
 from dart.model.query import Filter, Operator
 
@@ -93,11 +94,36 @@ def _find_workflow_instances(workflow=None):
 @jsonapi
 def put_workflow(workflow):
     """ :type workflow: dart.model.workflow.Workflow """
-    updated_workflow = Workflow.from_dict(request.get_json())
-    if updated_workflow.data.state not in [WorkflowState.ACTIVE, WorkflowState.INACTIVE]:
+    return update_workflow(workflow, Workflow.from_dict(request.get_json()))
+
+
+@api_workflow_bp.route('/workflow/<workflow>', methods=['PATCH'])
+@fetch_model
+@jsonapi
+def patch_workflow(workflow):
+    """ :type workflow: dart.model.workflow.Workflow """
+    p = JsonPatch(request.get_json())
+    return update_workflow(workflow, Workflow.from_dict(p.apply(workflow.to_dict())))
+
+
+def update_workflow(workflow, updated_workflow):
+    if workflow.data.state not in [WorkflowState.ACTIVE, WorkflowState.INACTIVE]:
         return {'results': 'ERROR', 'error_message': 'state must be ACTIVE or INACTIVE'}, 400, None
-    workflow = workflow_service().update_workflow_state(workflow, updated_workflow.data.state)
-    return {'results': workflow.to_dict()}
+
+    # only allow updating fields that are editable
+    sanitized_workflow = workflow.copy()
+    sanitized_workflow.data.name = updated_workflow.data.name
+    sanitized_workflow.data.state = updated_workflow.data.state
+    sanitized_workflow.data.concurrency = updated_workflow.data.concurrency
+    sanitized_workflow.data.on_failure_email = updated_workflow.data.on_failure_email
+    sanitized_workflow.data.on_success_email = updated_workflow.data.on_success_email
+    sanitized_workflow.data.on_started_email = updated_workflow.data.on_started_email
+    sanitized_workflow.data.tags = updated_workflow.data.tags
+
+    # revalidate
+    sanitized_workflow = workflow_service().default_and_validate_workflow(sanitized_workflow)
+
+    return {'results': workflow_service().patch_workflow(workflow, sanitized_workflow).to_dict()}
 
 
 @api_workflow_bp.route('/workflow/<workflow>/do-manual-trigger', methods=['POST'])

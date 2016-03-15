@@ -11,7 +11,7 @@ angular
                 return Utils.wrap($resource('api/1/datastore/:datastore_id/workflow')
                     .save({datastore_id: e.data.datastore_id}, Utils.stripSingleArrayElementNulls(e)).$promise, true)
             },
-            updateEntity: function(e) { return Utils.wrap(api().update({id: e.id }, e).$promise, true) },
+            updateEntity: function(e) { return Utils.wrap(api().update({id: e.id }, Utils.stripSingleArrayElementNulls(e)).$promise, true) },
             manuallyRunWorkflow: function(id) { return Utils.wrap(runWorkflowApi().save({id: id }, null).$promise, true) }
         };
     }])

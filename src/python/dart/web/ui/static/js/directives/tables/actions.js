@@ -59,6 +59,14 @@ angular
                                 on_success_email: entity.data.on_success_email
                             }
                         } : entity;
+
+                        var saveFunc = null;
+                        if (mode === 'edit') {
+                            saveFunc = function (entity) { return ActionService.updateEntity(entity).then(function(e) { entity = e; return e }) }
+                        }
+                        if (mode === 'duplicate') {
+                            saveFunc = function (entity) { return ActionService.saveEntity(entity) }
+                        }
                         EntityModalService.showDialog(ev, e,
                             function () {
                                 return ActionService.getSchema({entity: entity}).then(function(response) {
@@ -66,7 +74,7 @@ angular
                                     return response
                                 })
                             },
-                            mode === 'view' ? null : function (entity) { return ActionService.saveEntity(entity) }
+                            saveFunc
                         )
                     };
                     var engineCallPromise;

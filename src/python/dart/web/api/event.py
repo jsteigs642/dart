@@ -1,6 +1,7 @@
 import json
 from flask import Blueprint, request, current_app
 from flask.ext.jsontools import jsonapi
+from jsonpatch import JsonPatch
 
 from dart.model.event import Event
 from dart.service.event import EventService
@@ -43,9 +44,31 @@ def find_events():
 @fetch_model
 @jsonapi
 def put_event(event):
-    e = Event.from_dict(request.get_json())
-    event = event_service().update_event(event, e.data.name, e.data.description, e.data.state)
-    return {'results': event.to_dict()}
+    """ :type event: dart.model.event.Event """
+    return update_event(event, Event.from_dict(request.get_json()))
+
+
+@api_event_bp.route('/event/<event>', methods=['PATCH'])
+@fetch_model
+@jsonapi
+def patch_event(event):
+    """ :type event: dart.model.event.Event """
+    p = JsonPatch(request.get_json())
+    return update_event(event, Event.from_dict(p.apply(event.to_dict())))
+
+
+def update_event(event, updated_event):
+    # only allow updating fields that are editable
+    sanitized_event = event.copy()
+    sanitized_event.data.name = updated_event.data.name
+    sanitized_event.data.description = updated_event.data.description
+    sanitized_event.data.state = updated_event.data.state
+    sanitized_event.data.tags = updated_event.data.tags
+
+    # revalidate
+    sanitized_event = event_service().default_and_validate_event(sanitized_event)
+
+    return {'results': event_service().patch_event(event, sanitized_event).to_dict()}
 
 
 @api_event_bp.route('/event/<event>', methods=['DELETE'])

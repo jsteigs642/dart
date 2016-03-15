@@ -193,6 +193,12 @@ class Dart(object):
         assert datastore_id, 'datastore_id must be provided to save a new workflow'
         return self._request('post', '/datastore/%s/workflow' % datastore_id, data=workflow.to_dict(), model_class=Workflow)
 
+    def patch_workflow(self, workflow, **data_properties):
+        """ :type workflow: dart.model.workflow.Workflow
+            :rtype: dart.model.workflow.Workflow """
+        p = self._get_patch(workflow, data_properties)
+        return self._request('patch', '/workflow/%s' % workflow.id, data=p.patch, model_class=Workflow)
+
     def get_workflow(self, workflow_id):
         """ :type workflow_id: str
             :rtype: dart.model.workflow.Workflow """
@@ -236,6 +242,12 @@ class Dart(object):
         dataset_id = dataset_id or subscription.data.dataset_id
         assert dataset_id, 'dataset_id must be provided to save a new subscription'
         return self._request('post', '/dataset/%s/subscription' % subscription.data.dataset_id, data=subscription.to_dict(), model_class=Subscription)
+
+    def patch_subscription(self, subscription, **data_properties):
+        """ :type subscription: dart.model.subscription.Subscription
+            :rtype: dart.model.subscription.Subscription """
+        p = self._get_patch(subscription, data_properties)
+        return self._request('patch', '/subscription/%s' % subscription.id, data=p.patch, model_class=Subscription)
 
     def await_subscription_generation(self, subscription_id, timeout_seconds=2):
         """ :type subscription_id: str
@@ -300,6 +312,12 @@ class Dart(object):
             :rtype: dart.model.trigger.Trigger """
         return self._request('post', '/trigger', data=trigger.to_dict(), model_class=Trigger)
 
+    def patch_trigger(self, trigger, **data_properties):
+        """ :type trigger: dart.model.trigger.Trigger
+            :rtype: dart.model.trigger.Trigger """
+        p = self._get_patch(trigger, data_properties)
+        return self._request('patch', '/trigger/%s' % trigger.id, data=p.patch, model_class=Trigger)
+
     def get_trigger(self, trigger_id):
         """ :type trigger_id: str
             :rtype: dart.model.trigger.Trigger """
@@ -319,6 +337,12 @@ class Dart(object):
         if event.id:
             return self._request('put', '/event/%s' % event.id, data=event.to_dict(), model_class=Event)
         return self._request('post', '/event', data=event.to_dict(), model_class=Event)
+
+    def patch_event(self, event, **data_properties):
+        """ :type event: dart.model.event.Event
+            :rtype: dart.model.event.Event """
+        p = self._get_patch(event, data_properties)
+        return self._request('patch', '/event/%s' % event.id, data=p.patch, model_class=Event)
 
     def get_event(self, event_id):
         """ :type event_id: str

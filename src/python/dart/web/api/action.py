@@ -90,25 +90,35 @@ def get_action(action):
     return {'results': action.to_dict()}
 
 
+@api_action_bp.route('/action/<action>', methods=['PUT'])
+@fetch_model
+@jsonapi
+def put_action(action):
+    """ :type action: dart.model.action.Action """
+    return update_action(action, Action.from_dict(request.get_json()))
+
+
 @api_action_bp.route('/action/<action>', methods=['PATCH'])
 @fetch_model
 @jsonapi
 def patch_action(action):
     """ :type action: dart.model.action.Action """
     p = JsonPatch(request.get_json())
-    sanitized_action = action.copy()
-    patched_action = Action.from_dict(p.apply(action.to_dict()))
+    return update_action(action, Action.from_dict(p.apply(action.to_dict())))
 
+
+def update_action(action, updated_action):
     # only allow updating fields that are editable
-    sanitized_action.data.name = patched_action.data.name
-    sanitized_action.data.args = patched_action.data.args
-    sanitized_action.data.tags = patched_action.data.tags
-    sanitized_action.data.progress = patched_action.data.progress
-    sanitized_action.data.order_idx = patched_action.data.order_idx
-    sanitized_action.data.on_failure = patched_action.data.on_failure
-    sanitized_action.data.on_failure_email = patched_action.data.on_failure_email
-    sanitized_action.data.on_success_email = patched_action.data.on_success_email
-    sanitized_action.data.extra_data = patched_action.data.extra_data
+    sanitized_action = action.copy()
+    sanitized_action.data.name = updated_action.data.name
+    sanitized_action.data.args = updated_action.data.args
+    sanitized_action.data.tags = updated_action.data.tags
+    sanitized_action.data.progress = updated_action.data.progress
+    sanitized_action.data.order_idx = updated_action.data.order_idx
+    sanitized_action.data.on_failure = updated_action.data.on_failure
+    sanitized_action.data.on_failure_email = updated_action.data.on_failure_email
+    sanitized_action.data.on_success_email = updated_action.data.on_success_email
+    sanitized_action.data.extra_data = updated_action.data.extra_data
 
     # revalidate
     sanitized_action = action_service().default_and_validate_action(sanitized_action)

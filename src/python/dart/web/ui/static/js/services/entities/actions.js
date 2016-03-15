@@ -36,6 +36,10 @@ angular
                 return Utils.wrap($resource('api/1/:action_type/:action_type_id/action')
                     .save(args, Utils.stripSingleArrayElementNulls(e)).$promise, true);
             },
+            updateEntity: function(e) {
+                var api = $resource('api/1/action/:id', null, { 'update': { method: 'PUT' }});
+                return Utils.wrap(api.update({id: e.id }, Utils.stripSingleArrayElementNulls(e)).$promise, true)
+            },
             deleteEntity: function(id) {
                 return Utils.wrap($resource('api/1/action/:id').delete({id: id}).$promise, true);
             }
