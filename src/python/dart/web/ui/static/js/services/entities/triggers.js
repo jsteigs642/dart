@@ -16,7 +16,7 @@ angular
             getEntity: function(id) { return Utils.wrap(api().get({id: id}).$promise) },
             getEntities: function(limit, offset, filters) { return Utils.wrap(api().get({limit: limit, offset: offset, filters: JSON.stringify(filters)}).$promise) },
             saveEntity: function(e) { return Utils.wrap(api().save({id: e.id }, Utils.stripSingleArrayElementNulls(e)).$promise, true) },
-            updateEntity: function(e) { return Utils.wrap(api().update({id: e.id }, e).$promise, true) }
+            updateEntity: function(e) { return Utils.wrap(api().update({id: e.id }, Utils.stripSingleArrayElementNulls(e)).$promise, true) }
         };
     }])
 ;

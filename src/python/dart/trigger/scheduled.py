@@ -84,7 +84,7 @@ class ScheduledTriggerProcessor(TriggerProcessor):
             elif patch['path'] == '/data/args/cron_pattern' and patch['op'] == 'replace':
                 client.put_rule(
                     Name=self._get_cloudwatch_events_rule_name(modified_trigger),
-                    ScheduleExpression=modified_trigger.data.args['cron_pattern']
+                    ScheduleExpression='cron(%s)' % modified_trigger.data.args['cron_pattern'],
                 )
         return modified_trigger
 

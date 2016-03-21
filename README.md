@@ -90,7 +90,7 @@ dart (with a particular event id) in order to trigger dart workflows.
 * install grunt
 * install bower
 * install docker
-* instal docker-machine
+* install docker-machine
 * run the bash snippets below
 
 ###### install python libraries
@@ -234,7 +234,7 @@ python subscription.py
 ## usage
 
 If running locally with the default flask configuration, navigate to http://localhost:5000.  If you have deployed
-to AWS, navigate to http://<your-dart-host-and-port>.
+to AWS, navigate to http://your-dart-host-and-port.
 
 For a demonstration of dart's capabilities, follow these steps:
 1. navigate to the "datastores" link in the __entities__ section of the navbar (not the managers section)
