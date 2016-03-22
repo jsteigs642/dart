@@ -6,6 +6,15 @@ from dart.util.s3 import get_bucket_name, get_key_name
 _logger = logging.getLogger(__name__)
 
 
+def copy(s3_engine, datastore, action):
+    """
+    :type s3_engine: dart.engine.s3.s3.S3Engine
+    :type datastore: dart.model.datastore.Datastore
+    :type action: dart.model.action.Action
+    """
+    return s3_copy(**action.data.args)
+
+
 def extract_bucket_key(s3_path):
     return get_bucket_name(s3_path), get_key_name(s3_path)
 

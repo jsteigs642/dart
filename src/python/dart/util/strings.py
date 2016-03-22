@@ -8,3 +8,13 @@ all_cap_re = re.compile('([a-z0-9])([A-Z])')
 def to_snake_case(name):
     s1 = first_cap_re.sub(r'\1_\2', name)
     return all_cap_re.sub(r'\1_\2', s1).lower()
+
+
+def substitute_date_tokens(s, dt):
+    return s.replace(
+        '{YEAR}', dt.strftime('%Y')).replace(
+        '{MONTH}', dt.strftime('%m')).replace(
+        '{DAY}', dt.strftime('%d')).replace(
+        '{HOUR}', dt.strftime('%H')).replace(
+        '{MINUTE}', dt.strftime('%M')).replace(
+        '{SECOND}', dt.strftime('%S'))

@@ -53,16 +53,16 @@ def add_s3_engine(config):
         ],
     }
 
-    e1 = dart.save_engine(engine=Engine(
-            id=engine_id, data=EngineData(
-                    name='s3_engine',
-                    description='For S3 operations',
-                    options_json_schema={},
-                    supported_action_types=[
-                        S3ActionTypes.copy
-                    ],
-                    ecs_task_definition=ecs_task_definition
-            )))
+    e1 = dart.save_engine(Engine(id=engine_id, data=EngineData(
+        name='s3_engine',
+        description='For S3 operations',
+        options_json_schema={},
+        supported_action_types=[
+            S3ActionTypes.copy,
+            S3ActionTypes.data_check,
+        ],
+        ecs_task_definition=ecs_task_definition
+    )))
     _logger.info('Saved s3_engine: %s' % e1.id)
 
 if __name__ == '__main__':

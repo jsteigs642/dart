@@ -125,7 +125,7 @@ class RedshiftActionTypes(object):
                     'pattern': '^s3://.+$',
                     'description': 'The destination s3 path, e.g. s3://bucket/prefix.  The following values (with braces)'
                                    ' will be substituted with the appropriate zero-padded values at runtime:'
-                                   '{YEAR}, {MONTH}, {DAY}, {HOUR}, [MINUTE}, {SECOND}'
+                                   '{YEAR}, {MONTH}, {DAY}, {HOUR}, {MINUTE}, {SECOND}'
                 },
                 'parallel': {'type': 'boolean', 'default': True, 'description': 'if false, unload sequentially as one file'},
             },
