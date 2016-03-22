@@ -195,6 +195,7 @@ ecr:
         - engine-emr
         - engine-dynamodb
         - engine-redshift
+        - engine-s3
         - engine-worker
         - flask
         - nginx

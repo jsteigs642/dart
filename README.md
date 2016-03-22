@@ -237,6 +237,7 @@ If running locally with the default flask configuration, navigate to http://loca
 to AWS, navigate to http://your-dart-host-and-port.
 
 For a demonstration of dart's capabilities, follow these steps:
+
 1. navigate to the "datastores" link in the __entities__ section of the navbar (not the managers section)
 1. create a new "no_op_engine" datastore with default values by clicking on the "+" button and then clicking "save"
 1. refresh the page
