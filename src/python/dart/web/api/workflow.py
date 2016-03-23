@@ -115,6 +115,7 @@ def update_workflow(workflow, updated_workflow):
     sanitized_workflow.data.name = updated_workflow.data.name
     sanitized_workflow.data.state = updated_workflow.data.state
     sanitized_workflow.data.concurrency = updated_workflow.data.concurrency
+    sanitized_workflow.data.on_failure = updated_workflow.data.on_failure
     sanitized_workflow.data.on_failure_email = updated_workflow.data.on_failure_email
     sanitized_workflow.data.on_success_email = updated_workflow.data.on_success_email
     sanitized_workflow.data.on_started_email = updated_workflow.data.on_started_email

@@ -4,10 +4,10 @@ import traceback
 
 from dart.context.locator import injectable
 from dart.message.call import TriggerCall
-from dart.model.action import ActionState, OnFailure, Action
+from dart.model.action import ActionState, OnFailure as ActionOnFailure, Action
 from dart.model.datastore import DatastoreState
 from dart.model.query import Filter, Operator
-from dart.model.workflow import WorkflowInstanceState, WorkflowState
+from dart.model.workflow import WorkflowInstanceState, WorkflowState, OnFailure as WorkflowOnFailure
 from dart.trigger.subscription import subscription_batch_trigger
 from dart.trigger.super import super_trigger
 
@@ -111,8 +111,7 @@ class TriggerListener(object):
             if state == ActionState.FAILED:
                 callbacks.append(lambda: self._emailer.send_action_failed_email(action, datastore))
 
-                if action.data.on_failure == OnFailure.DEACTIVATE:
-                    self._datastore_service.update_datastore_state(datastore, DatastoreState.INACTIVE)
+                if action.data.on_failure == ActionOnFailure.DEACTIVATE:
                     try_next_action = False
                     if wf and wfi:
                         self._workflow_service.update_workflow_state(wf, WorkflowState.INACTIVE)
@@ -122,8 +121,11 @@ class TriggerListener(object):
                         for a in self._action_service.query_actions_all(filters=[f1, f2]):
                             error_msg = 'A prior action (id=%s) in this workflow instance failed' % action.id
                             self._action_service.update_action_state(a, ActionState.SKIPPED, error_msg)
+                        if wf.data.on_failure == WorkflowOnFailure.DEACTIVATE:
+                            self._datastore_service.update_datastore_state(datastore, DatastoreState.INACTIVE)
                         callbacks.append(lambda: self._emailer.send_workflow_failed_email(wf, wfi))
-
+                    else:
+                        self._datastore_service.update_datastore_state(datastore, DatastoreState.INACTIVE)
                 else:
                     if wfi and action.data.last_in_workflow:
                         self._handle_complete_workflow(callbacks, wf, wfi, wfid)

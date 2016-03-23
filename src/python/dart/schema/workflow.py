@@ -1,4 +1,4 @@
-from dart.model.workflow import WorkflowState, WorkflowInstanceState
+from dart.model.workflow import WorkflowState, WorkflowInstanceState, OnFailure
 from dart.schema.base import base_schema, email_list_schema, tag_list_schema
 
 
@@ -11,6 +11,12 @@ def workflow_schema():
             'engine_name': {'type': ['string', 'null'], 'readonly': True},
             'state': {'type': 'string', 'enum': WorkflowState.all(), 'default': WorkflowState.INACTIVE},
             'concurrency': {'type': 'integer', 'default': 1, 'minimum': 1, 'maximum': 10},
+            'on_failure': {
+                'type': 'string',
+                'enum': OnFailure.all(),
+                'default': OnFailure.DEACTIVATE,
+                'description': 'applies to the datastore'
+            },
             'on_failure_email': email_list_schema(),
             'on_success_email': email_list_schema(),
             'on_started_email': email_list_schema(),

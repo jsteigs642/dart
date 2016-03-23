@@ -27,16 +27,27 @@ class WorkflowState(object):
         return [WorkflowState.ACTIVE, WorkflowState.INACTIVE]
 
 
+class OnFailure(object):
+    DEACTIVATE = 'DEACTIVATE'
+    CONTINUE = 'CONTINUE'
+
+    @staticmethod
+    def all():
+        return [OnFailure.DEACTIVATE, OnFailure.CONTINUE]
+
+
 @dictable
 class WorkflowData(BaseModel):
     def __init__(self, name, datastore_id=None, engine_name=None, state=WorkflowState.INACTIVE, concurrency=1,
-                 on_failure_email=None, on_success_email=None, on_started_email=None, tags=None):
+                 on_failure=OnFailure.CONTINUE, on_failure_email=None, on_success_email=None, on_started_email=None,
+                 tags=None):
         """
         :type name: str
         :type datastore_id: str
         :type engine_name: str
         :type state: str
         :type concurrency: int
+        :type on_failure: str
         :type on_failure_email: list[str]
         :type on_success_email: list[str]
         :type on_started_email: list[str]
@@ -47,6 +58,7 @@ class WorkflowData(BaseModel):
         self.engine_name = engine_name
         self.state = state
         self.concurrency = concurrency
+        self.on_failure = on_failure
         self.on_failure_email = on_failure_email or []
         self.on_success_email = on_success_email or []
         self.on_started_email = on_started_email or []

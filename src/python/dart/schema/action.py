@@ -18,7 +18,12 @@ def action_schema(supported_action_type_params_schema):
             'progress': {'type': ['number', 'null'], 'readonly': True},
             'order_idx': {'type': ['number', 'null'], 'minimum': 0.0},
             'error_message': {'type': ['string', 'null'], 'readonly': True, "x-schema-form": {"type": "textarea"}},
-            'on_failure': {'type': 'string', 'enum': OnFailure.all(), 'default': OnFailure.DEACTIVATE},
+            'on_failure': {
+                'type': 'string',
+                'enum': OnFailure.all(),
+                'default': OnFailure.DEACTIVATE,
+                'description': 'applies to the workflow if this is a workflow action template, otherwise the datastore'
+            },
             'on_failure_email': email_list_schema(),
             'on_success_email': email_list_schema(),
             'engine_name': {'type': 'string', 'readonly': True},
