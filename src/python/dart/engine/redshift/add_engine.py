@@ -68,7 +68,7 @@ def add_redshift_engine(config):
                     'type': 'integer',
                     'default': 2,
                     'minimum': 2,
-                    'maximum': 30,
+                    'maximum': 50,
                     'description': 'the number of nodes in this cluster'
                 },
                 'master_user_name': {

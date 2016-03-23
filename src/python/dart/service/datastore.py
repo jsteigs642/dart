@@ -57,6 +57,11 @@ class DatastoreService(object):
         return schema
 
     def patch_datastore(self, source_datastore, datastore):
+        schema = self.get_schema(datastore)
+        secrets = {}
+        datastore_dict = datastore.to_dict()
+        purge_secrets(datastore_dict, schema, secrets)
+        datastore = Datastore.from_dict(datastore_dict)
         datastore = patch_difference(DatastoreDao, source_datastore, datastore)
         self.handle_datastore_state_change(datastore, source_datastore.data.state, datastore.data.state)
         return datastore

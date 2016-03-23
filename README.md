@@ -59,8 +59,8 @@ An instance of a running workflow with state and timing information.
 ###### subscription
 A subscription is a stateful listing of dataset files on S3.  Unprocessed subscription elements are considered
 "unconsumed".  When an engine provides an action with an action type name of "consume_subscription", dart will assign
-unconsumed subscription elements to that action at run time.  Engine's can request these subscription elements
-through an API call.
+unconsumed subscription elements to that action at run time.  Engines can request these subscription elements
+through a REST api call.
 
 ###### trigger
 A trigger initiates a workflow.  There are several types of triggers available:
