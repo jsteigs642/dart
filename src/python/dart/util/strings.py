@@ -1,4 +1,5 @@
 import re
+from datetime import timedelta
 
 first_cap_re = re.compile('(.)([A-Z][a-z]+)')
 all_cap_re = re.compile('([a-z0-9])([A-Z])')
@@ -10,7 +11,11 @@ def to_snake_case(name):
     return all_cap_re.sub(r'\1_\2', s1).lower()
 
 
-def substitute_date_tokens(s, dt):
+def substitute_date_tokens(s, dt, date_offset_in_seconds=0):
+    if not s:
+        return s
+    if date_offset_in_seconds:
+        dt = dt + timedelta(seconds=date_offset_in_seconds)
     return s.replace(
         '{YEAR}', dt.strftime('%Y')).replace(
         '{MONTH}', dt.strftime('%m')).replace(

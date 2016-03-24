@@ -53,9 +53,32 @@ class RedshiftActionTypes(object):
             'type': 'object',
             'properties': {
                 'dataset_id': {'type': 'string', 'description': 'The id of the dataset to load'},
-                's3_path_start_prefix_inclusive': {'type': ['string', 'null'], 'default': None, 'pattern': '^s3://.+$', 'description': 'The inclusive s3 path start prefix'},
-                's3_path_end_prefix_exclusive': {'type': ['string', 'null'], 'default': None, 'pattern': '^s3://.+$', 'description': 'The exclusive s3 path end prefix'},
-                's3_path_regex_filter': {'type': ['string', 'null'], 'default': None, 'description': 'A regex pattern the s3 path must match'},
+                's3_path_start_prefix_inclusive_date_offset_in_seconds': {'type': ['integer', 'null'], 'default': 0, 'description': 'If specified, the date used in s3 path substitutions will be adjusted by this amount'},
+                's3_path_start_prefix_inclusive': {
+                    'type': ['string', 'null'],
+                    'default': None,
+                    'pattern': '^s3://.+$',
+                    'description': 'The inclusive s3 path start prefix. The following values (with braces) will be '
+                                   'substituted with the appropriate zero-padded values at runtime: {YEAR}, {MONTH}, '
+                                   '{DAY}, {HOUR}, {MINUTE}, {SECOND}',
+                },
+                's3_path_end_prefix_exclusive_date_offset_in_seconds': {'type': ['integer', 'null'], 'default': 0, 'description': 'If specified, the date used in s3 path substitutions will be adjusted by this amount'},
+                's3_path_end_prefix_exclusive': {
+                    'type': ['string', 'null'],
+                    'default': None,
+                    'pattern': '^s3://.+$',
+                    'description': 'The exclusive s3 path end prefix. The following values (with braces) will be '
+                                   'substituted with the appropriate zero-padded values at runtime: {YEAR}, {MONTH}, '
+                                   '{DAY}, {HOUR}, {MINUTE}, {SECOND}',
+                },
+                's3_path_regex_filter_date_offset_in_seconds': {'type': ['integer', 'null'], 'default': 0, 'description': 'If specified, the date used in s3 path substitutions will be adjusted by this amount'},
+                's3_path_regex_filter': {
+                    'type': ['string', 'null'],
+                    'default': None,
+                    'description': 'A regex pattern the s3 path must match. The following values (with braces) will be '
+                                   'substituted with the appropriate zero-padded values at runtime: {YEAR}, {MONTH}, '
+                                   '{DAY}, {HOUR}, {MINUTE}, {SECOND}',
+                },
                 'target_schema_name': {'type': ['string', 'null'], 'default': 'public', 'pattern': '^[a-zA-Z0-9_]+$', 'description': 'created if absent'},
                 'target_table_name': {'type': ['string', 'null'], 'default': None, 'pattern': '^[a-zA-Z0-9_]+$', 'description': 'overrides dataset setting'},
                 'target_sort_keys': {
@@ -84,9 +107,6 @@ class RedshiftActionTypes(object):
             'type': 'object',
             'properties': {
                 'subscription_id': {'type': 'string', 'description': 'The id of the subscription to consume'},
-                's3_path_start_prefix_inclusive': {'type': ['string', 'null'], 'default': None, 'pattern': '^s3://.+$', 'description': 'The inclusive s3 path start prefix'},
-                's3_path_end_prefix_exclusive': {'type': ['string', 'null'], 'default': None, 'pattern': '^s3://.+$', 'description': 'The exclusive s3 path end prefix'},
-                's3_path_regex_filter': {'type': ['string', 'null'], 'default': None, 'description': 'A regex pattern the s3 path must match'},
                 'target_schema_name': {'type': ['string', 'null'], 'default': 'public', 'pattern': '^[a-zA-Z0-9_]+$', 'description': 'created if absent'},
                 'target_table_name': {'type': ['string', 'null'], 'default': None, 'pattern': '^[a-zA-Z0-9_]+$', 'description': 'overrides dataset setting'},
                 'target_sort_keys': {

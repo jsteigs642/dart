@@ -60,7 +60,7 @@ def add_emr_engine(config):
             'properties': {
                 'release_label': {'type': 'string', 'pattern': '^emr-[0-9].[0-9].[0-9]+$', 'default': 'emr-4.2.0', 'description': 'desired EMR release label'},
                 'instance_type': {'readonly': True, 'type': ['string', 'null'], 'default': 'm3.2xlarge', 'description': 'The ec2 instance type of master/core nodes'},
-                'instance_count': {'type': ['integer', 'null'], 'default': None, 'minimum': 1, 'maximum': 30, 'description': 'The total number of nodes in this cluster (overrides data_to_freespace_ratio)'},
+                'instance_count': {'type': ['integer', 'null'], 'default': None, 'minimum': 1, 'maximum': 50, 'description': 'The total number of nodes in this cluster (overrides data_to_freespace_ratio)'},
                 'data_to_freespace_ratio': {'type': ['number', 'null'], 'default': 0.5, 'minimum': 0.0, 'maximum': 1.0, 'description': 'Desired ratio of HDFS data/free-space'},
                 'dry_run': {'type': ['boolean', 'null'], 'default': False, 'description': 'write extra_data to actions, but do not actually run'},
             },

@@ -1,7 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
-import boto3
 import re
+
+import boto3
+
 from dart.util.s3 import get_bucket_name, get_key_name
 from dart.util.strings import substitute_date_tokens
 
@@ -16,10 +18,9 @@ def data_check(s3_engine, datastore, action):
     """
     action = s3_engine.dart.patch_action(action, progress=.1)
     args = action.data.args
+    offset = args.get('date_offset_in_seconds')
     now = datetime.utcnow()
-    if args.get('date_offset_in_seconds'):
-        now = now + timedelta(seconds=args['date_offset_in_seconds'])
-    s3_path_prefix = substitute_date_tokens(args['s3_path_prefix'], now)
+    s3_path_prefix = substitute_date_tokens(args['s3_path_prefix'], now, offset)
     bucket_name = get_bucket_name(s3_path_prefix)
     prefix = get_key_name(s3_path_prefix)
 
@@ -27,7 +28,8 @@ def data_check(s3_engine, datastore, action):
     for page in s3_paginator.paginate(Bucket=bucket_name, Prefix=prefix):
         for element in (page.get('Contents') or []):
             path = 's3://' + bucket_name + '/' + element['Key']
-            if args.get('s3_path_regex') and not re.match(substitute_date_tokens(args['s3_path_regex'], now), path):
+            s3_path_regex = args.get('s3_path_regex')
+            if s3_path_regex and not re.match(substitute_date_tokens(s3_path_regex, now, offset), path):
                 continue
             if args.get('min_file_size_in_bytes') and element['Size'] < args['min_file_size_in_bytes']:
                 continue

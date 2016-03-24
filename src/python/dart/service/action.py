@@ -61,6 +61,8 @@ class ActionService(object):
         if not action_type:
             raise DartValidationException('unknown action: "%s"' % action.data.action_type_name)
         assert isinstance(action_type, ActionType)
+        if not action.data.args:
+            action.data.args = {}
         action = default_and_validate(action, action_schema(action_type.params_json_schema))
         return action
 

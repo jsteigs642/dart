@@ -37,7 +37,10 @@ def _s3_path_and_updated_generator(action, dataset):
         dataset.data.location,
         action.data.args.get('s3_path_start_prefix_inclusive'),
         action.data.args.get('s3_path_end_prefix_exclusive'),
-        action.data.args.get('s3_path_regex_filter')
+        action.data.args.get('s3_path_regex_filter'),
+        action.data.args.get('s3_path_start_prefix_inclusive_date_offset_in_seconds'),
+        action.data.args.get('s3_path_end_prefix_exclusive_date_offset_in_seconds'),
+        action.data.args.get('s3_path_regex_filter_date_offset_in_seconds'),
     )
     for key_obj in s3_keys:
         yield get_s3_path(key_obj), None

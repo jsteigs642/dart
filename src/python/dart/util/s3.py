@@ -1,6 +1,8 @@
+from datetime import datetime
 import re
 from retrying import retry
 from dart.util.shell import call
+from dart.util.strings import substitute_date_tokens
 
 
 def get_bucket(conn, s3_path):
@@ -13,7 +15,14 @@ def get_s3_path(key_object):
 
 
 def yield_s3_keys(bucket, s3_path_root_prefix, s3_path_start_prefix_inclusive=None, s3_path_end_prefix_exclusive=None,
-                  s3_path_regex_filter=None):
+                  s3_path_regex_filter=None, s3_path_start_prefix_inclusive_date_offset_in_seconds=0,
+                  s3_path_end_prefix_exclusive_date_offset_in_seconds=0, s3_path_regex_filter_date_offset_in_seconds=0):
+
+    now = datetime.utcnow()
+    s3_path_start_prefix_inclusive = substitute_date_tokens(s3_path_start_prefix_inclusive, now, s3_path_start_prefix_inclusive_date_offset_in_seconds)
+    s3_path_end_prefix_exclusive = substitute_date_tokens(s3_path_end_prefix_exclusive, now, s3_path_end_prefix_exclusive_date_offset_in_seconds)
+    s3_path_regex_filter = substitute_date_tokens(s3_path_regex_filter, now, s3_path_regex_filter_date_offset_in_seconds)
+
     start_key_prefix = get_key_name(s3_path_start_prefix_inclusive) if s3_path_start_prefix_inclusive else None
     first_key = bucket.get_all_keys(prefix=start_key_prefix, max_keys=1) if start_key_prefix else None
     marker = first_key[0].key if first_key else ''
