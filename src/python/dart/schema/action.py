@@ -9,7 +9,7 @@ def action_schema(supported_action_type_params_schema):
         'properties': {
             'name': {'type': 'string', 'pattern': '^[a-zA-Z0-9_-]+$', 'maxLength': 50},
             'action_type_name': {'type': 'string', 'readonly': True},
-            'args': supported_action_type_params_schema or {'type': 'null'},
+            'args': supported_action_type_params_schema or {'type': ['null', 'object'], 'additionalProperties': False, 'properties': {}},
             'state': {'type': 'string', 'enum': ActionState.all(), 'default': ActionState.HAS_NEVER_RUN},
             'tags': tag_list_schema(),
             'queued_time': {'type': ['string', 'null'], 'readonly': True},

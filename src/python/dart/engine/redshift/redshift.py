@@ -55,10 +55,10 @@ class RedshiftEngine(object):
         state = ActionResultState.SUCCESS
         error_message = None
         try:
-            _logger.info("**** RedshiftEngine.run_action: %s", action.data.action_type_name)
-            error_message = 'unsupported action: %s' % action.data.action_type_name
-            assert action.data.action_type_name in self._action_handlers, error_message
-            handler = self._action_handlers[action.data.action_type_name]
+            action_type_name = action.data.action_type_name
+            _logger.info("**** RedshiftEngine.run_action: %s", action_type_name)
+            assert action_type_name in self._action_handlers, 'unsupported action: %s' % action_type_name
+            handler = self._action_handlers[action_type_name]
             handler(self, datastore, action)
 
         except Exception as e:
