@@ -20,6 +20,7 @@ from dart.engine.no_op.add_sub_graphs import add_no_op_engine_sub_graphs
 from dart.engine.redshift.add_engine import add_redshift_engine
 from dart.engine.s3.add_engine import add_s3_engine
 from dart.service.secrets import Secrets
+from dart.model.exception import DartRequestException
 
 from dart.util.s3 import get_bucket_name, get_key_name
 
@@ -149,13 +150,13 @@ class PartialEnvironmentCreateTool(DeploymentTool):
         time.sleep(5)
 
         _logger.info('adding engines')
-        add_no_op_engine(output_config)
-        add_no_op_engine_sub_graphs(output_config)
-        add_emr_engine(output_config)
-        add_emr_engine_sub_graphs(output_config)
-        add_dynamodb_engine(output_config)
-        add_redshift_engine(output_config)
-        add_s3_engine(output_config)
+        self._with_retries(10, add_no_op_engine, output_config)
+        self._with_retries(10, add_no_op_engine_sub_graphs, output_config)
+        self._with_retries(10, add_emr_engine, output_config)
+        self._with_retries(10, add_emr_engine_sub_graphs, output_config)
+        self._with_retries(10, add_dynamodb_engine, output_config)
+        self._with_retries(10, add_redshift_engine, output_config)
+        self._with_retries(10, add_s3_engine, output_config)
 
         _logger.info('creating and waiting for remaining stacks')
         engine_worker_stack_name = self._create_stack('engine-worker', output_config)
@@ -192,6 +193,20 @@ class PartialEnvironmentCreateTool(DeploymentTool):
         queue_url = self._get_queue_url(output_config['sqs']['queue_names'][queue_name])
         queue_arn = self._get_queue_arn(queue_url)
         return queue_arn, queue_url
+
+    @staticmethod
+    def _with_retries(retry_attempts, function_to_retry, *args, **kwargs):
+        for i in range(0, retry_attempts):
+            try:
+                function_to_retry(*args, **kwargs)
+            except DartRequestException as e:
+                if i < retry_attempts:
+                    if e.response.status_code == 503:
+                        time.sleep(5)
+                        continue
+                else:
+                    raise
+            break
 
 
 def _parse_args():
