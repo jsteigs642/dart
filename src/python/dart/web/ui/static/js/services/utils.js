@@ -1,7 +1,7 @@
 angular
     .module('dart.services.utils', [])
-    .factory('dtUtils', ['$mdToast', '$window',
-        function($mdToast, $window) {
+    .factory('dtUtils', ['$mdToast', '$mdDialog', '$window',
+        function($mdToast, $mdDialog, $window) {
             function stripSingleArrayElementNulls(obj) {
                 for (var property in obj) {
                     if (obj.hasOwnProperty(property)) {
@@ -26,13 +26,33 @@ angular
                     return $promise.then(
                         function(response) {
                             if (showSuccessToast) {
-                                $mdToast.show($mdToast.simple().content('Success!').position('top right').hideDelay(3000));
+                                var toast = $mdToast
+                                    .simple()
+                                    .content('Success!')
+                                    .position('top right')
+                                    .hideDelay(3000)
+                                $mdToast.show(toast);
                             }
                             return response
                         },
                         function(error) {
                             console.error(error);
-                            $mdToast.show($mdToast.simple().content('Failed :(').position('top right').hideDelay(30000));
+                            var toast = $mdToast
+                                .simple()
+                                .content('Failed :(')
+                                .position('top right')
+                                .hideDelay(30000)
+                                .action('More Info');
+                            $mdToast.show(toast).then(function(response) {
+                                if ( response == 'ok' ) {
+                                    $mdDialog.show($mdDialog
+                                        .alert()
+                                        .title('Error')
+                                        .textContent(error.data)
+                                        .ok('OK')
+                                    );
+                                }
+                            });
                             return error
                         }
                     );
