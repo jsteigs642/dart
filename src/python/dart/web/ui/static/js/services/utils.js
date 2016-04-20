@@ -45,10 +45,12 @@ angular
                                 .action('More Info');
                             $mdToast.show(toast).then(function(response) {
                                 if ( response == 'ok' ) {
+                                    var errorText;
+                                    errorText = ( error.data ? error.data : 'An unknown error occurred' );
                                     $mdDialog.show($mdDialog
                                         .alert()
                                         .title('Error')
-                                        .textContent(error.data)
+                                        .textContent(errorText)
                                         .ok('OK')
                                     );
                                 }
